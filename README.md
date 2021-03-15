@@ -1,4 +1,4 @@
 # Race_Manager
 Race manager developed for university project
 
-YEAH BOY
+Made by Pedro Ferreira and Edgar Duarte
