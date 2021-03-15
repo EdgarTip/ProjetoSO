@@ -12,11 +12,14 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+<<<<<<< HEAD
 #include "RaceManager.c"
 
 
 #define DEBUG
 
+=======
+>>>>>>> Processes created
 int * shared_var;
 
 
@@ -50,16 +53,37 @@ int main(){
 
   system("date|cut -c17-24 >> logs.txt");
 
+<<<<<<< HEAD
   int pid=fork();
 
   if(pid==0){
     #ifdef DEBUG
     printf("Simulador de Corrida.\n");
     #endif
+=======
+  fclose(fp);
+
+
+  // Create shared memory
+	int shmid=shmget(IPC_PRIVATE, sizeof(int), IPC_CREAT|0700);
+  if (shmid < 1){
+	 perror("Error in shmget with IPC_CREAT\n");
+	 exit(0);
+	}
+
+  // Attach shared memory
+  shared_var = (int*) shmat(shmid,NULL,0);
+
+  int pid=fork();
+
+  if(pid==0){
+    printf("Processo main\n");
+>>>>>>> Processes created
   }
   else{
     int pid2=fork();
     if(pid2==0){
+<<<<<<< HEAD
       #ifdef DEBUG
       printf("Gestor de Corrida criado.\n");
       #endif
@@ -73,5 +97,14 @@ int main(){
     }
   }
 sleep(3);
+=======
+      printf("Gerador de Corrida.\n");
+    }
+    else{
+      printf("Gerador de Avarias.\n");
+    }
+  }
+
+>>>>>>> Processes created
   return 0;
 }
