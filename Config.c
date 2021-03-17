@@ -10,7 +10,7 @@
 #include <sys/fcntl.h>
 #include <semaphore.h>
 
-typedef struct {
+ struct mem_struct{
   int time_units_per_second;
   int lap_distance;
   int number_of_laps;
@@ -19,9 +19,9 @@ typedef struct {
   int T_Box_Min;
   int T_Box_Max;
   int fuel_capacity;
-} mem_struct;
+};
 
-mem_struct *mem;
+struct mem_struct *mem;
 int shmid;
 
 int readConfigFile(){
@@ -56,10 +56,7 @@ int readConfigFile(){
 
 int main(){
 
-  shmid = shmget(IPC_PRIVATE, sizeof(mem_struct), IPC_CREAT|0700);
-  if (shmid < 1) exit(0);
-  mem = (mem_struct*) shmat(shmid, NULL, 0);
-  if (mem < (mem_struct*) 1) exit(0);
+  mem = (struct mem_struct*) malloc(sizeof(struct mem_struct));
 
   readConfigFile();
 
