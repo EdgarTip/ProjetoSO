@@ -92,7 +92,7 @@ int main(){
   for(int i = 0; i< inf_fich->number_of_teams; i++){
     printList(team_list[i].car_list_root);
   }
-
+  print("ola");
   return 0;
 
 }
