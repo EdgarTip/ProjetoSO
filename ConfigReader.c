@@ -22,7 +22,27 @@ int main(){
   printf("T_Box_Min, T_Box_Max: %d, %d\n",T_Box_Min,T_Box_Max);
   printf("Capacidade do depósito de combustível: %d\n",fuel_capacity);
 
+<<<<<<< HEAD
 
   fclose(fp);
+=======
+  fclose(fp);
+
+  int pid=fork();
+
+  if(pid==0){
+    printf("Processo main\n");
+  }
+  else{
+    int pid2=fork();
+    if(pid2==0){
+      printf("Gerador de Corrida.\n");
+    }
+    else{
+      printf("Gerador de Avarias.\n");
+    }
+  }
+
+>>>>>>> 1e7e5761e16894d7aae839590bc315764229918e
   return 0;
 }
