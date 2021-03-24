@@ -1,5 +1,6 @@
 
 #define SIZE 50
+
 struct config_fich_struct{
   int time_units_per_second;
   int lap_distance;
