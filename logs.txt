@@ -1,1 +1,18 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
  19:33:2
+=======
+=======
+>>>>>>> Escrita da hora para o log file.
+18:12:36
+18:13:21
+18:13:49
+18:14:49
+<<<<<<< HEAD
+>>>>>>> Escrita da hora para o log file.
+=======
+>>>>>>> Escrita da hora para o log file.
+18:42:57
+19:09:07
+19:09:50
+19:12:02
