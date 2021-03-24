@@ -12,3 +12,7 @@
 >>>>>>> Escrita da hora para o log file.
 =======
 >>>>>>> Escrita da hora para o log file.
+18:42:57
+19:09:07
+19:09:50
+19:12:02

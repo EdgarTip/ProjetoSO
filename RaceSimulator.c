@@ -14,6 +14,7 @@
 #include <sys/fcntl.h>
 #include <semaphore.h>
 #include "RaceSimulator.h"
+#include "RaceManager.h"
 
 /*Struct that retains the information given by the initial file
 Not a shared memory struct but the values will be given to the
@@ -103,7 +104,7 @@ int main(){
 
   int pid=fork();
 
-  if(pid==0){
+  if(pid!=0){
     printf("Processo main\n");
   }
   else{
@@ -115,6 +116,8 @@ int main(){
       car_list[1].speed = 70;
       car_list[1].consumption = 30;
       car_list[1].reliability = 10;
+
+      Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
 
       exit(0);
     }

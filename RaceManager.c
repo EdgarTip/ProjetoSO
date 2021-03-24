@@ -15,9 +15,9 @@
 
 #define DEBUG
 
-void thread_carro(int i, int j){
-  #ifdef DEBUG
-    printf("Criei carro %d da equipa %d",j,i);
+void thread_carro(void* team_number){
+    #ifdef DEBUG
+    printf("Criei carro da equipa %d.\n",team_number);
     #endif
 }
 
@@ -30,11 +30,10 @@ void Race_Manager(int number_of_teams, int max_cars){
       printf("Criei um gestor de equipa (%d): %d\n",i,getpid());
       #endif
 
-      int ids[max_cars]; // A ESTRUTURA EQUIPA VAI TER UM ARRAY DE CARROS, ONDE VAMOS GUARDAR OS IDS
+      //int ids[max_cars]; // A ESTRUTURA EQUIPA VAI TER UM ARRAY DE CARROS, ONDE VAMOS GUARDAR OS IDS
       pthread_t carros[max_cars];
       for(int j=0; j<max_cars;j++){
-        ids[i]=i+1;
-        pthread_create(&carros[j], NULL, thread_carro,i,j);
+        pthread_create(&carros[j], NULL, thread_carro,i);
       }
 
       // wait until all threads finish
