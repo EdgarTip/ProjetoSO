@@ -66,6 +66,19 @@ int readConfigFile(){
   return 0;
 }
 
+void teste1(){
+  printf("%s\n" ,team_list[0].team_name);
+  printList(team_list[0].car_list_root);
+
+}
+
+
+void teste2(){
+
+  printf("%s\n" ,team_list[0].team_name);
+
+  printList(team_list[0].car_list_root);
+}
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(){
 
@@ -79,20 +92,49 @@ int main(){
   if (shmid < 1) exit(0);
   team_list = (struct teams*) shmat(shmid, NULL, 0);
 
+  printf("%ld\n", sizeof(struct teams ) * inf_fich->number_of_teams);
+  system("date|cut -c17-24 >> logs.txt");
 
-  for(int i = 0; i< inf_fich->number_of_teams; i++){
+  strcpy(team_list[0].team_name,"Team A");
 
-    for(int j = 0; j < 3; j++){
-      struct car new_car = {i + j, i + j, i+ j , i+ j};
-      insert(new_car, &team_list[i].car_list_root);
+  struct car carro = { 10, 30, 50, 60};
+  struct car carro2 = { 100, 80, 90, 70};
+  insert(carro, &team_list[0].car_list_root);
+
+
+  printf("%s\n" ,team_list[0].team_name);
+
+  int pid=fork();
+
+  if(pid==0){
+    printf("Processo main\n");
+  }
+  else{
+    int pid2=fork();
+    if(pid2==0){
+      sleep(3);
+      printf("Gerador de Corrida.\n");
+
+      teste1();
+      exit(0);
+    }
+    else{
+      sleep(3);
+      printf("Gerador de Avarias.\n");
+
+      teste2();
+
+      exit(0);
     }
   }
 
+  printf("---------MAIN-------\n");
 
-  for(int i = 0; i< inf_fich->number_of_teams; i++){
-    printList(team_list[i].car_list_root);
-  }
 
+  printf("%s\n" ,team_list[0].team_name);
+
+  printList(team_list[0].car_list_root);
+  sleep(2);
   return 0;
 
 }
