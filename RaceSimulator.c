@@ -14,10 +14,9 @@
 #include <sys/fcntl.h>
 #include <semaphore.h>
 #include "RaceSimulator.h"
-<<<<<<< HEAD
+
 #include "RaceManager.h"
-=======
->>>>>>> 72a18383936cef0c8e452d81d31d01e3b188e957
+
 
 /*Struct that retains the information given by the initial file
 Not a shared memory struct but the values will be given to the
@@ -112,22 +111,18 @@ int main(){
   }
   else{
     int pid2=fork();
-<<<<<<< HEAD
     if(pid2==0){
-=======
-    if(pid2!=0){
->>>>>>> 72a18383936cef0c8e452d81d31d01e3b188e957
+
       printf("Gerador de Corrida.\n");
       strcpy(car_list[1].team_name, "Sporting");
       car_list[1].car_number = 2;
       car_list[1].speed = 70;
       car_list[1].consumption = 30;
       car_list[1].reliability = 10;
-<<<<<<< HEAD
-
+      printf("%d", inf_fich->number_of_teams);
+      printf("fsakçofsdjjhissd\n");
       Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
-=======
->>>>>>> 72a18383936cef0c8e452d81d31d01e3b188e957
+
 
       exit(0);
     }
@@ -138,18 +133,15 @@ int main(){
       car_list[2].speed = 50;
       car_list[2].consumption = 10;
       car_list[2].reliability = 90000;
-<<<<<<< HEAD
 
-=======
->>>>>>> 72a18383936cef0c8e452d81d31d01e3b188e957
       exit(0);
     }
   }
 
   printf("---------MAIN-------\n");
 
-  sleep(2);
-<<<<<<< HEAD
+  sleep(7);
+
 
   for(int i = 0; i < inf_fich->number_of_cars; i++){
     printf("nome :%s,car number: %d, speed : %d, consumption: %d,reliability%d \n",
@@ -159,18 +151,6 @@ int main(){
     car_list[i].consumption,
     car_list[i].reliability);
   }
-=======
-
-  for(int i = 0; i < inf_fich->number_of_cars; i++){
-    printf("nome :%s,car number: %d, speed : %d, consumption: %d,reliability%d \n",
-    car_list->team_name,
-    car_list[i].car_number,
-    car_list[i].speed,
-    car_list[i].consumption,
-    car_list[i].reliability);
-  }
-
->>>>>>> 72a18383936cef0c8e452d81d31d01e3b188e957
 
   return 0;
 

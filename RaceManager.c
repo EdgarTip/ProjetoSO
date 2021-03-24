@@ -11,51 +11,49 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-<<<<<<< HEAD
 #include <pthread.h>
 
 #define DEBUG
 
-void thread_carro(void* team_number){
+void *thread_carro(void* team_number){
+    int number=*((int *)team_number);
     #ifdef DEBUG
-    printf("Criei carro da equipa %d.\n",team_number);
+    printf("Criei carro da equipa %d.\n",number);
     #endif
+    pthread_exit(NULL);
+    return NULL;
 }
-
-void Race_Manager(int number_of_teams, int max_cars){
-=======
 
 #define DEBUG
 
-void Race_Manager(int number_of_teams){
->>>>>>> main
+void Race_Manager(int number_of_teams, int max_cars){
 
+  int workerId[max_cars];
+  pthread_t carros[max_cars * number_of_teams];
   //CRIAR OS GESTORES DE EQUIPA
   for(int i=0;i<number_of_teams;i++){
     if(fork()==0){
       #ifdef DEBUG
       printf("Criei um gestor de equipa (%d): %d\n",i,getpid());
       #endif
-<<<<<<< HEAD
-
-      //int ids[max_cars]; // A ESTRUTURA EQUIPA VAI TER UM ARRAY DE CARROS, ONDE VAMOS GUARDAR OS IDS
-      pthread_t carros[max_cars];
+      sleep(1);
+      // A ESTRUTURA EQUIPA VAI TER UM ARRAY DE CARROS, ONDE VAMOS GUARDAR OS IDS
       for(int j=0; j<max_cars;j++){
-        pthread_create(&carros[j], NULL, thread_carro,i);
+        workerId[j] = j+1;
+        pthread_create(&carros[i*max_cars+ j], NULL, thread_carro,&workerId[j]);
+
+      }
+      for(int j=0; j<max_cars; j++){
+        pthread_join(carros[j],NULL);
       }
 
       // wait until all threads finish
-     for(int j=0; j<max_cars; j++){
-       pthread_join(carros[j],NULL);
-     }
-
    }
-=======
-    }
->>>>>>> main
-    else exit(0);
+   else{
+     printf("bye\n");
+     sleep(6);
+     exit(0);
+   }
   }
-
-
 
 }
