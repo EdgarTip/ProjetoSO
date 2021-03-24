@@ -13,15 +13,10 @@ struct config_fich_struct{
   int fuel_capacity;
 };
 
-
 struct car{
+  char team_name[SIZE];
   int car_number;
   int speed;
   int consumption;
   int reliability;
-};
-
-struct team{
-  char team_name[SIZE];
-  struct car cars[];
 };

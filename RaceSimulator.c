@@ -66,14 +66,12 @@ int readConfigFile(){
 }
 
 
-void teste(struct team *teams){
-
-  for( int i = 0; i <= sizeof(teams)/sizeof(struct team*); i++){
-    printf("%s", teams[i].team_name);
-    for( int j = 0 ; j<= sizeof(teams[i].cars)/sizeof(struct car*); j++){
-      printf("%d", teams[i].cars[j].speed);
-    }
+void teste(struct car *cars){
+  for( int i = 0; i < sizeof(cars)/sizeof(struct car); i++){
+    printf("%s %d", cars[i].team_name, cars[i].speed);
   }
+
+
 }
 
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
@@ -83,57 +81,50 @@ int main(){
   inf_fich = (struct config_fich_struct*) malloc(sizeof(struct config_fich_struct));
   readConfigFile();
 
-  struct team{
-    char team_name[SIZE];
-    struct car cars[inf_fich->number_of_cars];
-  };
+  struct car *car_list;
 
 
-  shmid = shmget(IPC_PRIVATE, sizeof(struct team*) * inf_fich->number_of_teams, IPC_CREAT|0700);
+  shmid = shmget(IPC_PRIVATE, sizeof(struct car*) * inf_fich->number_of_teams*inf_fich->number_of_cars, IPC_CREAT|0700);
 
   if (shmid < 1) exit(0);
 
-  struct team team_list[inf_fich->number_of_teams];
-  memset(team_list, 0, sizeof(team_list));
-  memcpy(team_list, (struct team*) shmat(shmid, NULL, 0),sizeof(team_list));
+
+  car_list = (struct car*) shmat(shmid, NULL, 0);
 
 
+    strcpy(car_list[0].team_name, "asdas");
+    car_list[0].car_number = 1;
+    car_list[0].speed = 10 ;
+    car_list[0].consumption = 60 ;
+    car_list[0].reliability = 80;
 
   system("date|cut -c17-24 >> logs.txt");
 
 
-  struct car carro2 = {10, 50, 60 ,80};
-  struct car carro = { 10, 30, 50, 60};
-
-
   int pid=fork();
 
-  if(pid==0){
+  if(pid!=0){
     printf("Processo main\n");
   }
   else{
     int pid2=fork();
-    if(pid2==0){
-      team_list[1].team_name = "Sporting";
-      team_list[1].cars[0] = carro;
-      team_list[1].cars[1] = carro2;
-
-      sleep(2);
-
+    if(pid2!=0){
       printf("Gerador de Corrida.\n");
+      strcpy(car_list[1].team_name, "Sporting");
+      car_list[1].car_number = 2;
+      car_list[1].speed = 70;
+      car_list[1].consumption = 30;
+      car_list[1].reliability = 10;
 
-      teste(team_list);
       exit(0);
     }
     else{
-      team_list[0].team_name = "Sporting";
-      team_list[0].cars[0] = carro;
-      team_list[0].cars[1] = carro2;
-      sleep(1);
       printf("Gerador de Avarias.\n");
-      teste(team_list);
-
-
+      strcpy(car_list[2].team_name, "Benfica merda");
+      car_list[2].car_number = 3;
+      car_list[2].speed = 50;
+      car_list[2].consumption = 10;
+      car_list[2].reliability = 90000;
       exit(0);
     }
   }
@@ -141,6 +132,16 @@ int main(){
   printf("---------MAIN-------\n");
 
   sleep(2);
+
+  for(int i = 0; i < inf_fich->number_of_cars; i++){
+    printf("nome :%s,car number: %d, speed : %d, consumption: %d,reliability%d \n",
+    car_list->team_name,
+    car_list[i].car_number,
+    car_list[i].speed,
+    car_list[i].consumption,
+    car_list[i].reliability);
+  }
+
 
   return 0;
 
