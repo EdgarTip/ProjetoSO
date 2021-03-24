@@ -14,7 +14,6 @@
 #include <sys/fcntl.h>
 #include <semaphore.h>
 #include "RaceSimulator.h"
-#include "LinkedList.h"
 
 /*Struct that retains the information given by the initial file
 Not a shared memory struct but the values will be given to the
@@ -28,8 +27,7 @@ of the cars. Will be updated by the Race Manager
 
 
 struct config_fich_struct *inf_fich;
-//Struct that will be in the shared memory
-struct teams *team_list;
+
 
 
 int shmid;
@@ -53,10 +51,11 @@ int readConfigFile(){
   printf("Ficheiro aberto com exito\n");
 
 
-  fscanf(fp,"%d\n%d, %d\n%d\n%d\n%d, %d\n%d",&(inf_fich->time_units_per_second),
+  fscanf(fp,"%d\n%d, %d\n%d\n%d\n%d\n%d, %d\n%d",&(inf_fich->time_units_per_second),
                                              &(inf_fich->lap_distance),
                                              &(inf_fich->number_of_laps),
                                              &(inf_fich->number_of_teams),
+                                             &(inf_fich->number_of_cars),
                                              &(inf_fich->T_Avaria),
                                              &(inf_fich->T_Box_Min),
                                              &(inf_fich->T_Box_Max),
@@ -66,19 +65,17 @@ int readConfigFile(){
   return 0;
 }
 
-void teste1(){
-  printf("%s\n" ,team_list[0].team_name);
-  printList(team_list[0].car_list_root);
 
+void teste(struct team *teams){
+
+  for( int i = 0; i <= sizeof(teams)/sizeof(struct team*); i++){
+    printf("%s", teams[i].team_name);
+    for( int j = 0 ; j<= sizeof(teams[i].cars)/sizeof(struct car*); j++){
+      printf("%d", teams[i].cars[j].speed);
+    }
+  }
 }
 
-
-void teste2(){
-
-  printf("%s\n" ,team_list[0].team_name);
-
-  printList(team_list[0].car_list_root);
-}
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(){
 
@@ -86,23 +83,28 @@ int main(){
   inf_fich = (struct config_fich_struct*) malloc(sizeof(struct config_fich_struct));
   readConfigFile();
 
+  struct team{
+    char team_name[SIZE];
+    struct car cars[inf_fich->number_of_cars];
+  };
 
 
-  shmid = shmget(IPC_PRIVATE, sizeof(struct teams ) * inf_fich->number_of_teams, IPC_CREAT|0700);
+  shmid = shmget(IPC_PRIVATE, sizeof(struct team*) * inf_fich->number_of_teams, IPC_CREAT|0700);
+
   if (shmid < 1) exit(0);
-  team_list = (struct teams*) shmat(shmid, NULL, 0);
 
-  printf("%ld\n", sizeof(struct teams ) * inf_fich->number_of_teams);
+  struct team team_list[inf_fich->number_of_teams];
+  memset(team_list, 0, sizeof(team_list));
+  memcpy(team_list, (struct team*) shmat(shmid, NULL, 0),sizeof(team_list));
+
+
+
   system("date|cut -c17-24 >> logs.txt");
 
-  strcpy(team_list[0].team_name,"Team A");
 
+  struct car carro2 = {10, 50, 60 ,80};
   struct car carro = { 10, 30, 50, 60};
-  struct car carro2 = { 100, 80, 90, 70};
-  insert(carro, &team_list[0].car_list_root);
 
-
-  printf("%s\n" ,team_list[0].team_name);
 
   int pid=fork();
 
@@ -112,17 +114,25 @@ int main(){
   else{
     int pid2=fork();
     if(pid2==0){
-      sleep(3);
+      team_list[1].team_name = "Sporting";
+      team_list[1].cars[0] = carro;
+      team_list[1].cars[1] = carro2;
+
+      sleep(2);
+
       printf("Gerador de Corrida.\n");
 
-      teste1();
+      teste(team_list);
       exit(0);
     }
     else{
-      sleep(3);
+      team_list[0].team_name = "Sporting";
+      team_list[0].cars[0] = carro;
+      team_list[0].cars[1] = carro2;
+      sleep(1);
       printf("Gerador de Avarias.\n");
+      teste(team_list);
 
-      teste2();
 
       exit(0);
     }
@@ -130,11 +140,8 @@ int main(){
 
   printf("---------MAIN-------\n");
 
-
-  printf("%s\n" ,team_list[0].team_name);
-
-  printList(team_list[0].car_list_root);
   sleep(2);
+
   return 0;
 
 }
