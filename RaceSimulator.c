@@ -45,7 +45,6 @@ int readConfigFile(){
 
   fp = fopen("/home/user/github/Race_Manager/configs.txt", "r"); // read mode
 
-  int time_units_per_second, lap_distance, number_of_laps, number_of_teams, T_Avaria, T_Box_Min, T_Box_Max, fuel_capacity;
   if (fp == NULL)
   {
      perror("Error while opening the file.\n");
@@ -69,14 +68,6 @@ int readConfigFile(){
 }
 
 
-void teste(struct car *cars){
-  for( int i = 0; i < sizeof(cars)/sizeof(struct car); i++){
-    printf("%s %d", cars[i].team_name, cars[i].speed);
-  }
-
-
-}
-
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(){
 
@@ -84,26 +75,26 @@ int main(){
   inf_fich = (struct config_fich_struct*) malloc(sizeof(struct config_fich_struct));
   readConfigFile();
 
-  struct car *car_list;
+  struct team *team_list;
 
 
-  shmid = shmget(IPC_PRIVATE, sizeof(struct car*) * inf_fich->number_of_teams*inf_fich->number_of_cars, IPC_CREAT|0700);
+  shmid = shmget(IPC_PRIVATE, sizeof(struct team*) * inf_fich->number_of_teams, IPC_CREAT|0700);
 
   if (shmid < 1) exit(0);
 
 
-  car_list = (struct car*) shmat(shmid, NULL, 0);
+  team_list = (struct team*) shmat(shmid, NULL, 0);
 
 
-    strcpy(car_list[0].team_name, "asdas");
-    car_list[0].car_number = 1;
-    car_list[0].speed = 10 ;
-    car_list[0].consumption = 60 ;
-    car_list[0].reliability = 80;
+  strcpy(team_list[0].team_name, "asdas");
+  team_list[0].cars[0].car_number = 1;
+  team_list[0].cars[0].speed = 10 ;
+  team_list[0].cars[0].consumption = 60 ;
+  team_list[0].cars[0].reliability = 80;
 
   system("date|cut -c17-24 >> logs.txt");
-
-
+  Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
+  /*
   int pid=fork();
 
   if(pid!=0){
@@ -151,7 +142,7 @@ int main(){
     car_list[i].consumption,
     car_list[i].reliability);
   }
-
+  */
   return 0;
 
 }

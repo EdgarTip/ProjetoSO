@@ -1,5 +1,6 @@
 
 #define SIZE 50
+#define MAX 5
 
 struct config_fich_struct{
   int time_units_per_second;
@@ -14,9 +15,15 @@ struct config_fich_struct{
 };
 
 struct car{
-  char team_name[SIZE];
   int car_number;
   int speed;
   int consumption;
   int reliability;
+};
+
+
+
+struct team{
+  char team_name[SIZE];
+  struct car cars[MAX];
 };
