@@ -1,3 +1,4 @@
+#define DEBUG
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -13,7 +14,7 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-#define DEBUG
+
 
 void *thread_carro(void* team_number){
     int number=*((int *)team_number);
@@ -22,9 +23,10 @@ void *thread_carro(void* team_number){
     #endif
     pthread_exit(NULL);
     return NULL;
+    
 }
 
-#define DEBUG
+
 
 void Race_Manager(int number_of_teams, int max_cars){
 
