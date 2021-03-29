@@ -15,7 +15,6 @@ struct config_fich_struct{
 };
 
 struct car{
-  char is_empty[1];
   int car_number;
   int speed;
   int consumption;
