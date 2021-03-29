@@ -15,6 +15,7 @@ struct config_fich_struct{
 };
 
 struct car{
+  char is_empty[1];
   int car_number;
   int speed;
   int consumption;
@@ -25,5 +26,6 @@ struct car{
 
 struct team{
   char team_name[SIZE];
-  struct car cars[MAX];
+  char box_state[SIZE];
+  struct car *cars;
 };
