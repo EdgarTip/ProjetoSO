@@ -108,7 +108,7 @@ int main(){
 
   int iteracao = 1;
   for(int i = 0; i < inf_fich->number_of_teams ; i++){
-      team_list[i].cars = (struct car*)(team_list +  iteracao);
+      team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams + iteracao);
       iteracao++;
   }
 
