@@ -36,6 +36,27 @@ struct team *team_list;
 
 int shmid;
 
+
+void teste(){
+  for(i = 0; i< inf_fich->number_of_teams; i++){
+    if(sizeof(team_list[i].team_name) == 0){
+      return;
+    }
+    for(j = 0; j < inf_fich->number_of_cars){
+      if(sizeof(team_list[i].cars[j].is_empty) ==0){
+        break;
+      }
+      printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %d\n Car reliability: %d", team_list[i]->team_name
+                                                                                                                       , team_list[i]->.box_state
+                                                                                                                       , team_list[i]->cars[j]->car_number
+                                                                                                                       , team_list[i]->cars[j]->speed
+                                                                                                                       , team_list[i]->cars[j]->consumption
+                                                                                                                       , team_list[i]->cars[j]->reliability);
+
+    }
+  }
+
+}
 //Reads the initial file and gives values to the inf_fich struct
 int readConfigFile(){
   FILE *fp;
@@ -93,6 +114,7 @@ int main(){
   //Apenas para teste
   strcpy(team_list[0].team_name,"Sporting");
   strcpy(team_list[0].box_state, "OPEN" ) ;
+  strcpy(team_list[0].cars[0].is_empty , "N");
   team_list[0].cars[0].speed = 10;
   team_list[0].cars[0].consumption = 70;
   team_list[0].cars[0].reliability = 60;
@@ -110,7 +132,8 @@ int main(){
       sleep(3);
       printf("Gerador de Corrida.\n");
       strcpy(team_list[1].team_name,"Porto");
-      strcpy(team_list[1].box_state, "OPEN" ) ;
+      strcpy(team_list[1].box_state, "OPEN" );
+      strcpy(team_list[0].cars[0].is_empty , "N");
       team_list[1].cars[0].speed = 90;
       team_list[1].cars[0].consumption = 100;
       team_list[1].cars[0].reliability = 70;
@@ -122,7 +145,15 @@ int main(){
       exit(0);
     }
     else{
-      sleep
+      sleep(2);
+      printf("Gerador de Corrida.\n");
+      strcpy(team_list[2].team_name,"Benfica");
+      strcpy(team_list[2].box_state, "Reservado");
+      strcpy(team_list[0].cars[0].is_empty , "N");
+      team_list[2].cars[0].speed = 50;
+      team_list[2].cars[0].consumption = 10;
+      team_list[2].cars[0].reliability = 40;
+      team_list[2].cars[0].car_number = 9;
       printf("Gerador de Avarias.\n");
       exit(0);
     }
