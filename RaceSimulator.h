@@ -25,5 +25,6 @@ struct car{
 
 struct team{
   char team_name[SIZE];
-  struct car cars[MAX];
+  char box_state[SIZE];
+  struct car *cars;
 };

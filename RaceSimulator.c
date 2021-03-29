@@ -31,6 +31,7 @@ of the cars. Will be updated by the Race Manager
 
 struct config_fich_struct *inf_fich;
 
+struct team *team_list;
 
 
 int shmid;
@@ -75,29 +76,30 @@ int main(){
   inf_fich = (struct config_fich_struct*) malloc(sizeof(struct config_fich_struct));
   readConfigFile();
 
-  struct team *team_list;
 
-
-  shmid = shmget(IPC_PRIVATE, sizeof(struct team*) * inf_fich->number_of_teams, IPC_CREAT|0700);
-
+  //Creates shared memory
+  shmid = shmget(IPC_PRIVATE, (sizeof(struct team*) + sizeof(struct car) * inf_fich->number_of_cars)* inf_fich->number_of_teams, IPC_CREAT|0700);
   if (shmid < 1) exit(0);
-
-
   team_list = (struct team*) shmat(shmid, NULL, 0);
 
-
-  strcpy(team_list[0].team_name, "asdas");
-  team_list[0].cars[0].car_number = 1;
-  team_list[0].cars[0].speed = 10 ;
-  team_list[0].cars[0].consumption = 60 ;
-  team_list[0].cars[0].reliability = 80;
-
+  for(int i = 0; i < inf_fich->number_of_teams ; i++){
+      struct car *car_list = (struct car*) malloc(sizeof(struct car) * inf_fich->number_of_cars);
+      team_list[i].cars = car_list;
+  }
   system("date|cut -c17-24 >> logs.txt");
-  Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
-  /*
-  int pid=fork();
 
-  if(pid!=0){
+  //Apenas para teste
+  strcpy(team_list[0].team_name,"Sporting");
+  strcpy(team_list[0].box_state, "Open" ) ;
+  team_list[0].cars[0].speed = 10;
+  team_list[0].cars[0].consumption = 70;
+  team_list[0].cars[0].reliability = 60;
+  team_list[0].cars[0].car_number = 1;
+  //Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
+
+  int pid=fork();
+  /*
+  if(pid!=0){:::
     printf("Processo main\n");
   }
   else{
@@ -119,12 +121,6 @@ int main(){
     }
     else{
       printf("Gerador de Avarias.\n");
-      strcpy(car_list[2].team_name, "Benfica merda");
-      car_list[2].car_number = 3;
-      car_list[2].speed = 50;
-      car_list[2].consumption = 10;
-      car_list[2].reliability = 90000;
-
       exit(0);
     }
   }
@@ -143,6 +139,9 @@ int main(){
     car_list[i].reliability);
   }
   */
+  free(inf_fich);
+  shmdt(team_list);
+  shmctl(shmid, IPC_RMID, NULL);
   return 0;
 
 }
