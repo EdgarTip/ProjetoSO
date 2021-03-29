@@ -86,40 +86,43 @@ int main(){
       struct car *car_list = (struct car*) malloc(sizeof(struct car) * inf_fich->number_of_cars);
       team_list[i].cars = car_list;
   }
+
+
   system("date|cut -c17-24 >> logs.txt");
 
   //Apenas para teste
   strcpy(team_list[0].team_name,"Sporting");
-  strcpy(team_list[0].box_state, "Open" ) ;
+  strcpy(team_list[0].box_state, "OPEN" ) ;
   team_list[0].cars[0].speed = 10;
   team_list[0].cars[0].consumption = 70;
   team_list[0].cars[0].reliability = 60;
   team_list[0].cars[0].car_number = 1;
-  //Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
+
 
   int pid=fork();
-  /*
-  if(pid!=0){:::
+
+  if(pid!=0){
     printf("Processo main\n");
   }
   else{
     int pid2=fork();
     if(pid2==0){
-
+      sleep(3);
       printf("Gerador de Corrida.\n");
-      strcpy(car_list[1].team_name, "Sporting");
-      car_list[1].car_number = 2;
-      car_list[1].speed = 70;
-      car_list[1].consumption = 30;
-      car_list[1].reliability = 10;
-      printf("%d", inf_fich->number_of_teams);
-      printf("fsakçofsdjjhissd\n");
-      Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
+      strcpy(team_list[1].team_name,"Porto");
+      strcpy(team_list[1].box_state, "OPEN" ) ;
+      team_list[1].cars[0].speed = 90;
+      team_list[1].cars[0].consumption = 100;
+      team_list[1].cars[0].reliability = 70;
+      team_list[1].cars[0].car_number = 8;
 
+      //Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
 
+      printf("Gerador de Corrida is out!");
       exit(0);
     }
     else{
+      sleep
       printf("Gerador de Avarias.\n");
       exit(0);
     }
@@ -138,7 +141,7 @@ int main(){
     car_list[i].consumption,
     car_list[i].reliability);
   }
-  */
+
   free(inf_fich);
   shmdt(team_list);
   shmctl(shmid, IPC_RMID, NULL);
