@@ -157,41 +157,40 @@ int main(){
       team_list[4].cars[0].reliability = 70;
       team_list[4].cars[0].car_number = 8;
       printf("---Gerador de Corrida.---\n");
-      teste();
+
       */
       //Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
 
       printf("Gerador de Corrida is out!\n");
-      sleep(2);
+
       exit(0);
     }
     else{
-      sleep(2);
+      printf("---Gerador de Avarias.---\n");
       /*strcpy(team_list[3].team_name,"Rio Ave");
       strcpy(team_list[3].box_state, "Reservado");
       team_list[3].cars[0].speed = 50;
       team_list[3].cars[0].consumption = 10;
       team_list[3].cars[0].reliability = 40;
       team_list[3].cars[0].car_number = 9;
-      printf("---Gerador de Avarias.---\n");
+
       */
 
-      teste();
-      sleep(5);
+
+
       exit(0);
     }
   }
 
   printf("---------MAIN-------\n");
 
-  teste();
 
   free(inf_fich);
   shmdt(team_list);
   shmctl(shmid, IPC_RMID, NULL);
   sem_close(mutex);
   sem_unlink("MUTEX");
-  sleep(5);
+  sleep(1);
   return 0;
 
 }
