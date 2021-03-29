@@ -23,7 +23,7 @@ void *thread_carro(void* team_number){
     #endif
     pthread_exit(NULL);
     return NULL;
-    
+
 }
 
 
