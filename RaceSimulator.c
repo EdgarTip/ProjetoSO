@@ -38,25 +38,27 @@ int shmid;
 
 
 void teste(){
-  for(i = 0; i< inf_fich->number_of_teams; i++){
-    if(sizeof(team_list[i].team_name) == 0){
+  for(int i = 0; i< inf_fich->number_of_teams; i++){
+    if(strcmp(team_list[i].team_name, "") == 0){
       return;
     }
-    for(j = 0; j < inf_fich->number_of_cars){
-      if(sizeof(team_list[i].cars[j].is_empty) ==0){
+    for(int j = 0; j < inf_fich->number_of_cars; j++){
+      if(strcmp(team_list[i].cars[j].is_empty, "") ==0){
         break;
       }
-      printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %d\n Car reliability: %d", team_list[i]->team_name
-                                                                                                                       , team_list[i]->.box_state
-                                                                                                                       , team_list[i]->cars[j]->car_number
-                                                                                                                       , team_list[i]->cars[j]->speed
-                                                                                                                       , team_list[i]->cars[j]->consumption
-                                                                                                                       , team_list[i]->cars[j]->reliability);
-
+      printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %d\n Car reliability: %d\n", team_list[i].team_name
+                                                                                                                       , team_list[i].box_state
+                                                                                                                       , team_list[i].cars[j].car_number
+                                                                                                                       , team_list[i].cars[j].speed
+                                                                                                                       , team_list[i].cars[j].consumption
+                                                                                                                       , team_list[i].cars[j].reliability);
     }
+    printf("-----------\n");
   }
 
 }
+
+
 //Reads the initial file and gives values to the inf_fich struct
 int readConfigFile(){
   FILE *fp;
@@ -99,13 +101,15 @@ int main(){
 
 
   //Creates shared memory
-  shmid = shmget(IPC_PRIVATE, (sizeof(struct team*) + sizeof(struct car) * inf_fich->number_of_cars)* inf_fich->number_of_teams, IPC_CREAT|0700);
+  shmid = shmget(IPC_PRIVATE, (sizeof(struct team*) + sizeof(struct car*) * inf_fich->number_of_cars)* inf_fich->number_of_teams, IPC_CREAT|0700);
   if (shmid < 1) exit(0);
   team_list = (struct team*) shmat(shmid, NULL, 0);
+  if (team_list < (struct team*) 1) exit(0);
 
+  int iteracao = 1;
   for(int i = 0; i < inf_fich->number_of_teams ; i++){
-      struct car *car_list = (struct car*) malloc(sizeof(struct car) * inf_fich->number_of_cars);
-      team_list[i].cars = car_list;
+      team_list[i].cars = (struct car*)(team_list +  iteracao);
+      iteracao++;
   }
 
 
@@ -114,68 +118,67 @@ int main(){
   //Apenas para teste
   strcpy(team_list[0].team_name,"Sporting");
   strcpy(team_list[0].box_state, "OPEN" ) ;
-  strcpy(team_list[0].cars[0].is_empty , "N");
+  strcpy(team_list[0].cars[0].is_empty,"N");
   team_list[0].cars[0].speed = 10;
   team_list[0].cars[0].consumption = 70;
   team_list[0].cars[0].reliability = 60;
-  team_list[0].cars[0].car_number = 1;
+  team_list[0].cars[0].car_number = 19;
+
 
 
   int pid=fork();
 
   if(pid!=0){
-    printf("Processo main\n");
+    sleep(4);
   }
   else{
     int pid2=fork();
     if(pid2==0){
       sleep(3);
-      printf("Gerador de Corrida.\n");
-      strcpy(team_list[1].team_name,"Porto");
-      strcpy(team_list[1].box_state, "OPEN" );
-      strcpy(team_list[0].cars[0].is_empty , "N");
-      team_list[1].cars[0].speed = 90;
-      team_list[1].cars[0].consumption = 100;
-      team_list[1].cars[0].reliability = 70;
-      team_list[1].cars[0].car_number = 8;
 
+      strcpy(team_list[2].team_name,"Porto");
+      strcpy(team_list[2].box_state, "OPEN" );
+      strcpy(team_list[2].cars[0].is_empty , "N");
+      team_list[2].cars[0].speed = 90;
+      team_list[2].cars[0].consumption = 100;
+      team_list[2].cars[0].reliability = 70;
+      team_list[2].cars[0].car_number = 8;
+      printf("---Gerador de Corrida.---\n");
+      printf("--TESTE--\n");
+      printf("Team name: %s\n", team_list[1].team_name);
+      printf("Car speed: %d\n", team_list[1].cars[0].speed);
+      teste();
       //Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
 
-      printf("Gerador de Corrida is out!");
+      printf("Gerador de Corrida is out!\n");
+      sleep(2);
       exit(0);
     }
     else{
       sleep(2);
-      printf("Gerador de Corrida.\n");
-      strcpy(team_list[2].team_name,"Benfica");
-      strcpy(team_list[2].box_state, "Reservado");
-      strcpy(team_list[0].cars[0].is_empty , "N");
-      team_list[2].cars[0].speed = 50;
-      team_list[2].cars[0].consumption = 10;
-      team_list[2].cars[0].reliability = 40;
-      team_list[2].cars[0].car_number = 9;
-      printf("Gerador de Avarias.\n");
+      strcpy(team_list[1].team_name,"Benfica");
+      strcpy(team_list[1].box_state, "Reservado");
+      strcpy(team_list[1].cars[0].is_empty , "M");
+      team_list[1].cars[0].speed = 50;
+      team_list[1].cars[0].consumption = 10;
+      team_list[1].cars[0].reliability = 40;
+      team_list[1].cars[0].car_number = 9;
+      printf("---Gerador de Avarias.---\n");
+
+      teste();
+      sleep(5);
       exit(0);
     }
   }
 
   printf("---------MAIN-------\n");
 
-  sleep(7);
-
-
-  for(int i = 0; i < inf_fich->number_of_cars; i++){
-    printf("nome :%s,car number: %d, speed : %d, consumption: %d,reliability%d \n",
-    car_list->team_name,
-    car_list[i].car_number,
-    car_list[i].speed,
-    car_list[i].consumption,
-    car_list[i].reliability);
-  }
+  teste();
 
   free(inf_fich);
   shmdt(team_list);
   shmctl(shmid, IPC_RMID, NULL);
+  sleep(5);
   return 0;
 
 }
