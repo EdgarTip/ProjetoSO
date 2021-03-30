@@ -1,5 +1,5 @@
 #define DEBUG
-
+#define SIZE 50
 
 
 #include <stdlib.h>
@@ -17,6 +17,7 @@
 
 #include "RaceManager.h"
 #include "ReadConfig.h"
+#include "MultipleProcessActions.h"
 
 /*Struct that retains the information given by the initial file
 Not a shared memory struct but the values will be given to the
@@ -60,38 +61,27 @@ void teste(){
 }
 
 
-void writeLog(char * string){
-  char buffer[200];
-
-  sprintf(buffer, "date|cut -c17-24 >> logs.txt ; sed -i '$ s/$/ %s/' logs.txt; ",string);
-
-
-  /* https://unix.stackexchange.com/questions/412835/append-text-with-echo-without-new-line
-  sed -i '$ s/$/abc/' file.txt
-      -i - modify the file inplace
-      $ - indicate the last record/line
-      s/$/abc/ - substitute the end of the line $ with substring abc (for the last record)
-
-  */
-
-  sem_wait(mutex);
-
-  system(buffer);
-
-  sem_post(mutex);
-
-}
-
 
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
-int main(){
+int main(int argc, char* argv[]){
   system(">logs.txt");  //Limpa o ficheiro logs.txt
-  //Initialize the inf_fich struct and populate it
 
-   inf_fich=readConfigFile();
+  sem_unlink("MUTEX");
+  mutex = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
 
-   sem_unlink("MUTEX");
-   mutex = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
+  if (argc!=2){
+    writeLog("Error with input arguments. Execution aborted!", mutex);
+  	printf("Invalid number of arguments!\nUse as: executable {name of the configurations file}\n");
+  	exit(1);
+   }
+
+   //Read the configuration file
+   char *file_name = argv[1];
+   inf_fich=readConfigFile(file_name);
+
+
+   writeLog("Configuration file read", mutex);
+
 
 
 
@@ -106,8 +96,6 @@ int main(){
   }
 
 
-
-  writeLog("Ficheiro de entrada lido");
 
 
 
@@ -142,13 +130,14 @@ int main(){
   */
   int pid=fork();
 
-  if(pid!=0){
-    sleep(4);
-  }
-  else{
+  //Creates RaceManager and BreakDownManager
+  if(pid==0){
+
     int pid2=fork();
+
     if(pid2==0){
       sleep(3);
+
 
       /*strcpy(team_list[4].team_name,"Boavista");
       strcpy(team_list[4].box_state, "OPEN" );
@@ -159,12 +148,15 @@ int main(){
       printf("---Gerador de Corrida.---\n");
 
       */
-      //Race_Manager(inf_fich->number_of_teams, inf_fich->number_of_cars);
+      Race_Manager(inf_fich, mutex);
 
+      #ifdef DEBUG
       printf("Gerador de Corrida is out!\n");
+      #endif
 
       exit(0);
     }
+
     else{
       printf("---Gerador de Avarias.---\n");
       /*strcpy(team_list[3].team_name,"Rio Ave");
