@@ -45,7 +45,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   inf_fich = inf_fichP;
   team_list = team_listP;
   mutex = mutexP;
-
+  
   int workerId[inf_fich->number_of_cars];
   pthread_t carros[inf_fich->number_of_cars];
 

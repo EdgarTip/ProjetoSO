@@ -38,11 +38,12 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   mutex = mutexP;
 
   //CRIAR OS GESTORES DE EQUIPA
-
+  pid_t childip = fork();
   for(int i=0;i<inf_fich->number_of_teams;i++){
-    if(fork()==0){
-
+    if(childip==0){
+        
         Team_Manager(inf_fich, team_list, mutex);
+
         exit(0);
 
    }
