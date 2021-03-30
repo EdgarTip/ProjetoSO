@@ -49,7 +49,6 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
  }
 
 
- printf("I am the Race Manager I think :O");
  wait(NULL);
  exit(0);
 }

@@ -24,7 +24,7 @@ struct team *team_list;
 
 sem_t *mutex;
 
-void Break_Down_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, sem_t *mutexP){
+void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, sem_t *mutexP){
 
   #ifdef DEBUG
   printf("Breakdown Manager created with id: %ld\n",(long)getpid());

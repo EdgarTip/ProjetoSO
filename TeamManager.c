@@ -41,7 +41,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   printf("Team Manager created with id: %ld\n", (long)getpid());
   #endif
 
-  sleep(1);
+
   inf_fich = inf_fichP;
   team_list = team_listP;
   mutex = mutexP;
