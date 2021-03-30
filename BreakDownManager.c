@@ -24,32 +24,17 @@ struct team *team_list;
 
 sem_t *mutex;
 
-
-
-
-void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, sem_t *mutexP){
+void Break_Down_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, sem_t *mutexP){
 
   #ifdef DEBUG
-  printf("Race_Manager created with id: %ld\n",(long)getpid());
+  printf("Breakdown Manager created with id: %ld\n",(long)getpid());
   #endif
 
   inf_fich = inf_fichP;
   team_list = team_listP;
   mutex = mutexP;
 
-  //CRIAR OS GESTORES DE EQUIPA
-
-  for(int i=0;i<inf_fich->number_of_teams;i++){
-    if(fork()==0){
-
-        Team_Manager(inf_fich, team_list, mutex);
-        exit(0);
-
-   }
- }
-
-
- printf("I am the Race Manager I think :O");
- wait(NULL);
- exit(0);
+  #ifdef DEBUG
+  printf("Breakdown Manager is out!\n");
+  #endif
 }

@@ -5,20 +5,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <stdio.h>
-#include <sys/fcntl.h>
-#include <semaphore.h>
+#include <semaphore.h> // include POSIX semaphores
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <pthread.h>
 #include "RaceSimulator.h"
 
 #include "RaceManager.h"
 #include "ReadConfig.h"
 #include "MultipleProcessActions.h"
-
+#include "BreakDownManager.h"
 /*Struct that retains the information given by the initial file
 Not a shared memory struct but the values will be given to the
 processes created in this script*/
@@ -137,8 +140,6 @@ int main(int argc, char* argv[]){
 
     if(pid2==0){
 
-
-
       /*strcpy(team_list[4].team_name,"Boavista");
       strcpy(team_list[4].box_state, "OPEN" );
       team_list[4].cars[0].speed = 90;
@@ -158,7 +159,8 @@ int main(int argc, char* argv[]){
     }
 
     else{
-      printf("---Gerador de Avarias.---\n");
+
+      //printf("---Gerador de Avarias.---\n");
       /*strcpy(team_list[3].team_name,"Rio Ave");
       strcpy(team_list[3].box_state, "Reservado");
       team_list[3].cars[0].speed = 50;
@@ -167,16 +169,13 @@ int main(int argc, char* argv[]){
       team_list[3].cars[0].car_number = 9;
 
       */
-      #ifdef debug
-      printf("Breakdown Manager is out!");
-      #endif
+      BreakDownManager(inf_fich, team_list, mutex);
 
-
+      wait(NULL);
       exit(0);
     }
   }
 
-  printf("---------MAIN-------\n");
 
 
   free(inf_fich);
@@ -184,7 +183,8 @@ int main(int argc, char* argv[]){
   shmctl(shmid, IPC_RMID, NULL);
   sem_close(mutex);
   sem_unlink("MUTEX");
-  sleep(1);
+
+  wait(NULL);
   return 0;
 
 }
