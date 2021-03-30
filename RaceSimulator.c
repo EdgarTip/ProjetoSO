@@ -136,7 +136,7 @@ int main(int argc, char* argv[]){
     int pid2=fork();
 
     if(pid2==0){
-      sleep(3);
+
 
 
       /*strcpy(team_list[4].team_name,"Boavista");
@@ -148,10 +148,10 @@ int main(int argc, char* argv[]){
       printf("---Gerador de Corrida.---\n");
 
       */
-      Race_Manager(inf_fich, mutex);
+      Race_Manager(inf_fich, team_list, mutex);
 
       #ifdef DEBUG
-      printf("Gerador de Corrida is out!\n");
+      printf("Race Manager is out!\n");
       #endif
 
       exit(0);
@@ -167,7 +167,9 @@ int main(int argc, char* argv[]){
       team_list[3].cars[0].car_number = 9;
 
       */
-
+      #ifdef debug
+      printf("Breakdown Manager is out!");
+      #endif
 
 
       exit(0);

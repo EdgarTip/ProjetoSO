@@ -14,6 +14,8 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
+#include "MultipleProcessActions.h"
+#include "RaceSimulator.h"
 
 
 void *thread_carro(void* team_number){
@@ -28,18 +30,21 @@ void *thread_carro(void* team_number){
 
 
 
-void Race_Manager(int number_of_teams, int max_cars){
+void Race_Manager(struct config_fich_struct *inf_fich, struct team *team_list, sem_t *mutex){
+
+  #ifdef DEBUG
+  printf("Race_Manager created with id: %ld" long(getpid());
 
   int workerId[max_cars];
   pthread_t carros[max_cars * number_of_teams];
   //CRIAR OS GESTORES DE EQUIPA
   for(int i=0;i<number_of_teams;i++){
     if(fork()==0){
-      #ifdef DEBUG
-      printf("Criei um gestor de equipa (%d): %d\n",i,getpid());
-      #endif
+
+      Team_Manager(struct config_fich_struct *inf_fich, struct team *team_list, sem_t *mutex);
+
       sleep(1);
-      // A ESTRUTURA EQUIPA VAI TER UM ARRAY DE CARROS, ONDE VAMOS GUARDAR OS IDS
+
       for(int j=0; j<max_cars;j++){
         workerId[j] = j+1;
         pthread_create(&carros[i*max_cars+ j], NULL, thread_carro,&workerId[j]);
@@ -56,6 +61,6 @@ void Race_Manager(int number_of_teams, int max_cars){
      sleep(6);
      exit(0);
    }
-  }
+ }
 
 }
