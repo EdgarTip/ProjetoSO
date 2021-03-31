@@ -25,8 +25,6 @@ struct team *team_list;
 sem_t *mutex;
 
 
-
-
 void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, sem_t *mutexP){
 
   #ifdef DEBUG
@@ -38,18 +36,23 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   mutex = mutexP;
 
   //CRIAR OS GESTORES DE EQUIPA
-  pid_t childip = fork();
   for(int i=0;i<inf_fich->number_of_teams;i++){
+    pid_t childip = fork();
     if(childip==0){
-        
-        Team_Manager(inf_fich, team_list, mutex);
 
+        Team_Manager(inf_fich, team_list, mutex);
+        #ifdef DEBUG
+        printf("Team Manager %ld is out!\n", (long)getpid());
+        #endif
+        wait(NULL);
         exit(0);
 
    }
  }
 
-
+ #ifdef DEBUG
+ printf("Race Manager is out!\n");
+ #endif
  wait(NULL);
  exit(0);
 }

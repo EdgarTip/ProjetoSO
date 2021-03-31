@@ -27,7 +27,7 @@ sem_t *mutex;
 void *carThread(void* team_number){
     int number=*((int *)team_number);
     #ifdef DEBUG
-    printf("Criei carro da equipa %d.\n",number);
+    printf("I %ld created car %d.\n",(long)getpid(),number);
     #endif
     pthread_exit(NULL);
     return NULL;
@@ -45,7 +45,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   inf_fich = inf_fichP;
   team_list = team_listP;
   mutex = mutexP;
-  
+
   int workerId[inf_fich->number_of_cars];
   pthread_t carros[inf_fich->number_of_cars];
 

@@ -35,7 +35,6 @@ void writeLog(char * string, sem_t *mutex){
   printf("%ld is writing something to the log.txt file\n", (long)getpid());
   #endif
 
-  sleep(1);
   system(buffer);
 
   sem_post(mutex);
