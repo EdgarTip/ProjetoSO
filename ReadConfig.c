@@ -26,7 +26,7 @@ struct config_fich_struct * readConfigFile (char *file_name){
 
   if (fp == NULL)
   {
-     perror("Error while opening the file.\n");
+     perror("Error while opening the file\n");
      exit(EXIT_FAILURE);
   }
 
