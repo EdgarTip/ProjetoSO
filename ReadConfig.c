@@ -1,3 +1,5 @@
+//remove this line to remove debug messages
+#define DEBUG
 
 #include <stdlib.h>
 #include <string.h>
@@ -14,24 +16,24 @@
 #include "RaceSimulator.h"
 
 //Reads the initial file and gives values to the inf_fich struct
-struct config_fich_struct * readConfigFile (){
+struct config_fich_struct * readConfigFile (char *file_name){
   struct config_fich_struct * inf_fich;
 
   inf_fich = (struct config_fich_struct*) malloc(sizeof(struct config_fich_struct));
   FILE *fp;
 
-  #ifndef DEBUG
-  printf("Leitura do ficheiro de configurações.\n");
-  #endif
-
-  fp = fopen("/home/user/github/Race_Manager/configs.txt", "r"); // read mode
+  fp = fopen(file_name, "r"); // read mode
 
   if (fp == NULL)
   {
-     perror("Error while opening the file.\n");
+     perror("Error while opening the file\n");
      exit(EXIT_FAILURE);
   }
-  printf("Ficheiro aberto com exito\n");
+
+  #ifdef DEBUG
+  printf("Reading from the configurations file\n");
+  #endif
+  printf("File opened succesfully\n");
 
 
   int validation = fscanf(fp,"%d\n%d, %d\n%d\n%d\n%d\n%d, %d\n%d",&(inf_fich->time_units_per_second),
@@ -43,7 +45,6 @@ struct config_fich_struct * readConfigFile (){
                                              &(inf_fich->T_Box_Min),
                                              &(inf_fich->T_Box_Max),
                                              &(inf_fich->fuel_capacity));
-
 if( validation != 9 ||
     inf_fich->time_units_per_second < 0 ||
     inf_fich->lap_distance < 0 ||
@@ -71,6 +72,5 @@ if( validation != 9 ||
                                             (inf_fich->fuel_capacity));*/
 
   fclose(fp);
-
   return inf_fich;
 }
