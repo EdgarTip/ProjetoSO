@@ -31,9 +31,9 @@ struct config_fich_struct * readConfigFile (char *file_name){
   }
 
   #ifdef DEBUG
-  printf("Reading from the configurations file.\n");
+  printf("Reading from the configurations file\n");
   #endif
-  printf("Ficheiro aberto com exito\n");
+  printf("File opened succesfully\n");
 
 
   int validation = fscanf(fp,"%d\n%d, %d\n%d\n%d\n%d\n%d, %d\n%d",&(inf_fich->time_units_per_second),
