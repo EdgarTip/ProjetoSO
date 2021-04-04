@@ -15,8 +15,9 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-#include "MultipleProcessActions.h"
+
 #include "RaceSimulator.h"
+#include "MultipleProcessActions.h"
 
 struct config_fich_struct *inf_fich;
 struct team *team_list;
@@ -26,7 +27,6 @@ struct semaphoreStruct *semaphore_list;
 
 void *carThread(void* team_number){
     int number=*((int *)team_number);
-    writeLog("Car thread created", semaphore_list->mutexFicheiro);
     #ifdef DEBUG
     printf("I %ld created car %d.\n",(long)getpid(),number);
     #endif
@@ -41,7 +41,6 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   #ifdef DEBUG
   printf("Team Manager created with id: %ld\n", (long)getpid());
   #endif
-  writeLog("Team Manager process created", semaphore_list->mutexFicheiro);
 
   inf_fich = inf_fichP;
   team_list = team_listP;

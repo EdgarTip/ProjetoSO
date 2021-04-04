@@ -1,5 +1,5 @@
 #define DEBUG
-#define SIZE 50
+
 
 
 #include <stdlib.h>
@@ -16,8 +16,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <pthread.h>
-#include "RaceSimulator.h"
 
+#include "RaceSimulator.h"
 #include "RaceManager.h"
 #include "ReadConfig.h"
 #include "MultipleProcessActions.h"
@@ -69,7 +69,7 @@ void clean(){
   free(semaphore_list);
   shmdt(team_list);
   shmctl(shmid, IPC_RMID, NULL);
-  sem_close(semaphore_list->mutexFicheiro);
+  sem_close(semaphore_list->logMutex);
   sem_close(semaphore_list->writingMutex);
   sem_unlink("MUTEX");
   sem_unlink("WRITING_MUTEX");
@@ -81,12 +81,12 @@ int main(int argc, char* argv[]){
 
   semaphore_list = (struct semaphoreStruct*) malloc(sizeof(struct semaphoreStruct));
   sem_unlink("MUTEX");
-  semaphore_list->mutexFicheiro = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
+  semaphore_list->logMutex = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
   sem_unlink("WRITING_MUTEX");
   semaphore_list->writingMutex = sem_open("WRITING_MUTEX", O_CREAT|O_EXCL,0700,1);
 
   if (argc!=2){
-    writeLog("Error with input arguments. Execution aborted!", semaphore_list->mutexFicheiro);
+    writeLog("Error with input arguments. Execution aborted!", semaphore_list->logMutex);
   	printf("Invalid number of arguments!\nUse as: executable {name of the configurations file}\n");
   	exit(1);
    }
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]){
    inf_fich=readConfigFile(file_name);
 
 
-   writeLog("Configuration file read", semaphore_list->mutexFicheiro);
+   writeLog("SIMULATOR STARTING", semaphore_list->logMutex);
 
 
 
@@ -115,41 +115,15 @@ int main(int argc, char* argv[]){
   struct car car1 = {10,70,60,19};
   struct car car2 = {20,90,10,90};
   struct car car3 = {100,20,30,80};
-  struct car car4 = {50,30,10,70};
-  struct car car5 = {60,60,60,60};
-  struct car car6 = {30,90,70,65};
-
-  writingNewCarInSharedMem(team_list, car1, inf_fich, "Sporting", semaphore_list->writingMutex);
-
-  //Apenas para teste
-  /*
-  strcpy(team_list[0].team_name,"Sporting");
-  strcpy(team_list[0].box_state, "OPEN" ) ;
-  team_list[0].cars[0].speed = 10;
-  team_list[0].cars[0].consumption = 70;
-  team_list[0].cars[0].reliability = 60;
-  team_list[0].cars[0].car_number = 19;
-
-  team_list[0].cars[1].speed = 50;
-  team_list[0].cars[1].consumption = 80;
-  team_list[0].cars[1].reliability = 90;
-  team_list[0].cars[1].car_number = 29;
 
 
-  strcpy(team_list[1].team_name,"Benfica");
-  strcpy(team_list[1].box_state, "Reservado");
-  team_list[1].cars[0].speed = 50;
-  team_list[1].cars[0].consumption = 10;
-  team_list[1].cars[0].reliability = 40;
-  team_list[1].cars[0].car_number = 9;
 
-  strcpy(team_list[2].team_name,"Porto");
-  strcpy(team_list[2].box_state, "OPEN" );
-  team_list[2].cars[0].speed = 90;
-  team_list[2].cars[0].consumption = 100;
-  team_list[2].cars[0].reliability = 70;
-  team_list[2].cars[0].car_number = 8;
-  */
+
+  writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);
+  writingNewCarInSharedMem(team_list, &car2, inf_fich, "Porto", semaphore_list->writingMutex, semaphore_list->logMutex);
+  writingNewCarInSharedMem(team_list, &car3, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);
+
+
   int pid=fork();
 
   //Creates RaceManager and BreakDownManager
@@ -159,15 +133,6 @@ int main(int argc, char* argv[]){
 
     if(pid2==0){
 
-      /*strcpy(team_list[4].team_name,"Boavista");
-      strcpy(team_list[4].box_state, "OPEN" );
-      team_list[4].cars[0].speed = 90;
-      team_list[4].cars[0].consumption = 100;
-      team_list[4].cars[0].reliability = 70;
-      team_list[4].cars[0].car_number = 8;
-      printf("---Gerador de Corrida.---\n");
-
-      */
       Race_Manager(inf_fich, team_list, semaphore_list);
 
       #ifdef DEBUG
@@ -179,15 +144,6 @@ int main(int argc, char* argv[]){
 
     else{
 
-      //printf("---Gerador de Avarias.---\n");
-      /*strcpy(team_list[3].team_name,"Rio Ave");
-      strcpy(team_list[3].box_state, "Reservado");
-      team_list[3].cars[0].speed = 50;
-      team_list[3].cars[0].consumption = 10;
-      team_list[3].cars[0].reliability = 40;
-      team_list[3].cars[0].car_number = 9;
-
-      */
       BreakDownManager(inf_fich, team_list, semaphore_list);
 
       wait(NULL);
@@ -198,7 +154,10 @@ int main(int argc, char* argv[]){
 
 
   wait(NULL);
-  leituraParaTeste();
+  struct car car6 = {30,90,70,65};
+  //writingNewCarInSharedMem(team_list, &car6, inf_fich, "BOAVISTA", semaphore_list->writingMutex);
+  //leituraParaTeste();
+  writeLog("SIMULATOR CLOSING", semaphore_list->logMutex);
   clean();
   return 0;
 

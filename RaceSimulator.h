@@ -1,6 +1,6 @@
 
 #define SIZE 50
-#define MAX 5
+
 
 #include <stdlib.h>
 #include <string.h>
@@ -45,6 +45,6 @@ struct team{
 
 
 struct semaphoreStruct{
-  sem_t *mutexFicheiro;
+  sem_t *logMutex;
   sem_t *writingMutex;
 };
