@@ -1,17 +1,17 @@
-18:53:34 Configuration file read
-18:53:34 Team Manager process created
-18:53:34 Car thread created
-18:53:34 Car thread created
-18:53:34 Car thread created
-18:53:34 Team Manager process created
-18:53:34 Car thread created
-18:53:34 Car thread created
-18:53:34 Car thread created
-18:53:34 Team Manager process created
-18:53:34 Car thread created
-18:53:34 Car thread created
-18:53:34 Car thread created
-18:53:34 Team Manager process created
-18:53:34 Car thread created
-18:53:34 Car thread created
-18:53:34 Car thread created
+20:28:14 Configuration file read
+20:28:14 Team Manager process created
+20:28:14 Car thread created
+20:28:14 Car thread created
+20:28:14 Car thread created
+20:28:14 Team Manager process created
+20:28:14 Car thread created
+20:28:14 Car thread created
+20:28:14 Car thread created
+20:28:14 Team Manager process created
+20:28:14 Car thread created
+20:28:14 Car thread created
+20:28:14 Car thread created
+20:28:14 Team Manager process created
+20:28:14 Car thread created
+20:28:14 Car thread created
+20:28:14 Car thread created

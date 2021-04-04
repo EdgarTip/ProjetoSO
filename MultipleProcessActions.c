@@ -43,8 +43,8 @@ void writeLog(char * string, sem_t *mutex){
 }
 
 
-void writingNewCarInSharedMem(struct team *team_list, struct *car new_car, struct config_fich_struct *inf_fich, char[SIZE] team_name, sem_t *mutex){
-  int hasbeenchanged = 0;
+void writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct config_fich_struct *inf_fich, char *team_name, sem_t *mutex){
+
 
   sem_wait(mutex);
 
@@ -54,12 +54,12 @@ void writingNewCarInSharedMem(struct team *team_list, struct *car new_car, struc
       for(int j = 0; j<inf_fich->number_of_cars; j++){
 
         if(team_list[i].cars[j].speed == 0){
-          team_list[i].cars[j] = new_car;
+          team_list[i].cars[j] = *new_car;
           sem_post(mutex);
           return;
         }
       }
-      printf("WARNING! THERE WAS NO SPACE IN THE SELECTED TEAM. THE CAR WILL NOT BE CREATED!");
+      printf("WARNING! THERE WAS NO SPACE IN THE SELECTED TEAM. THE CAR WILL NOT BE CREATED!\n");
       sem_post(mutex);
       return;
     }
@@ -67,9 +67,11 @@ void writingNewCarInSharedMem(struct team *team_list, struct *car new_car, struc
     else if(strcmp(team_list[i].team_name,"") == 0){
       strcpy(team_list[i].team_name, team_name);
       strcpy(team_list[i].box_state, "OPEN");
-      team_list[i].cars[0] = new_car;
+      team_list[i].cars[0] = *new_car;
+      sem_post(mutex);
+      return;
     }
   }
-  printf("WARNING! THERE WAS NO SPACE TO CREATE A NEW TEAM. THE CAR WILL NOT BE CREATED!"\n");
+  printf("WARNING! THERE WAS NO SPACE TO CREATE A NEW TEAM. THE CAR WILL NOT BE CREATED!\n");
   sem_post(mutex);
 }

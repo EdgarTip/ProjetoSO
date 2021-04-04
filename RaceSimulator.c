@@ -43,7 +43,7 @@ struct semaphoreStruct *semaphore_list;
 int shmid;
 
 //PARA TESTE PARA APAGAR MAIS TARDE
-void teste(){
+void leituraParaTeste(){
   for(int i = 0; i< inf_fich->number_of_teams; i++){
     if(strcmp(team_list[i].team_name, "") == 0){
       return;
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
   sem_unlink("MUTEX");
   semaphore_list->mutexFicheiro = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
   sem_unlink("WRITING_MUTEX");
-  semaphore_list->writingMutex = sem_open("WRITING_MUTEX", 0_CREAT|0_EXCL,0700,1);
+  semaphore_list->writingMutex = sem_open("WRITING_MUTEX", O_CREAT|O_EXCL,0700,1);
 
   if (argc!=2){
     writeLog("Error with input arguments. Execution aborted!", semaphore_list->mutexFicheiro);
@@ -112,8 +112,14 @@ int main(int argc, char* argv[]){
   }
 
 
+  struct car car1 = {10,70,60,19};
+  struct car car2 = {20,90,10,90};
+  struct car car3 = {100,20,30,80};
+  struct car car4 = {50,30,10,70};
+  struct car car5 = {60,60,60,60};
+  struct car car6 = {30,90,70,65};
 
-
+  writingNewCarInSharedMem(team_list, car1, inf_fich, "Sporting", semaphore_list->writingMutex);
 
   //Apenas para teste
   /*
@@ -192,6 +198,7 @@ int main(int argc, char* argv[]){
 
 
   wait(NULL);
+  leituraParaTeste();
   clean();
   return 0;
 
