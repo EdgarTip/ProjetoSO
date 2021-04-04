@@ -1,4 +1,3 @@
-
 #define SIZE 50
 #define DEBUG
 
@@ -6,16 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <semaphore.h> // include POSIX semaphores
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <pthread.h>
+
 struct config_fich_struct{
   int time_units_per_second;
   int lap_distance;

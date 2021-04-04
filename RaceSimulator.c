@@ -1,20 +1,17 @@
 
+//COMPILE THE CODE USING: gcc RaceSimulator.c RaceManager.c ReadConfig.c  TeamManager.c BreakDownManager.c MultipleProcessActions.c -lpthread -D_REENTRANT -Wall -o exec
+//YOU CAN DEACTIVATE THE DEBUG MESSAGES BY DELITING THE "DEFINE DEBUG" (line 2) IN THE RACESIMULATOR.H FILE
 
+//TO RUN THE CODE AFTER COMPILING IT USE THE FORMAT : ./exec {configuration file name}
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-#include <sys/ipc.h>
 #include <sys/shm.h>
-#include <semaphore.h> // include POSIX semaphores
+#include <semaphore.h>
 #include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <pthread.h>
 
 #include "RaceSimulator.h"
 #include "RaceManager.h"
@@ -41,7 +38,7 @@ struct semaphoreStruct *semaphore_list;
 
 int shmid;
 
-//PARA TESTE PARA APAGAR MAIS TARDE
+//Only for debug purposes will be deleted/changed later
 void leituraParaTeste(){
   for(int i = 0; i< inf_fich->number_of_teams; i++){
     if(strcmp(team_list[i].team_name, "") == 0){
@@ -63,6 +60,7 @@ void leituraParaTeste(){
 
 }
 
+//cleans active memory
 void clean(){
   free(inf_fich);
   free(semaphore_list);
@@ -109,17 +107,8 @@ int main(int argc, char* argv[]){
   for(int i = 0; i < inf_fich->number_of_teams ; i++){
       team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams + i +1);
   }
-
+  printf("SIMULATION STARTING\n");
   writeLog("SIMULATOR STARTING", semaphore_list->logMutex);
-
-
-  struct car car1 = {10,70,60,19};
-  struct car car2 = {20,90,10,90};
-  struct car car3 = {100,20,30,80};
-
-  writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car2, inf_fich, "Porto", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car3, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);
 
 
   int pid=fork();
@@ -128,7 +117,7 @@ int main(int argc, char* argv[]){
   if(pid==0){
 
     int pid2=fork();
-
+    //Creates the RaceManager
     if(pid2==0){
 
       Race_Manager(inf_fich, team_list, semaphore_list);
@@ -139,24 +128,30 @@ int main(int argc, char* argv[]){
 
       exit(0);
     }
-
+    //Creates the break down manager
     else{
 
       BreakDownManager(inf_fich, team_list, semaphore_list);
 
+      //The break down manager waits for its child (RaceManager) to die
       wait(NULL);
       exit(0);
     }
   }
 
 
-
+  //The main process waits for its child (BreakDownManager) to die
   wait(NULL);
 
   #ifdef DEBUG
-  printf("---SHARED MEMORY ANTES DE ACABAR O SIMULADOR---");
-  #endif
+  printf("---SHARED MEMORY BEFORE THE SIMULATOR ENDED---\n");
+  //Only for debugging purposes. We know that there are no protections to the shared memory here, but they
+  //do not need to exist because it is in a controled envirnoment. In future work there will be a mutex
+  //stoping any readers in case someone is changing the shared memory.
   leituraParaTeste();
+  #endif
+
+  printf("SIMULATION CLOSING\n");
   writeLog("SIMULATOR CLOSING", semaphore_list->logMutex);
   clean();
   return 0;
