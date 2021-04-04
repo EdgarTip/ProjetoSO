@@ -19,13 +19,11 @@
 #include "TeamManager.h"
 
 struct config_fich_struct *inf_fich;
-
 struct team *team_list;
+struct semaphoreStruct *semaphore_list;
 
-sem_t *mutex;
 
-
-void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, sem_t *mutexP){
+void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP){
 
   #ifdef DEBUG
   printf("Race_Manager created with id: %ld\n",(long)getpid());
@@ -33,7 +31,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
   inf_fich = inf_fichP;
   team_list = team_listP;
-  mutex = mutexP;
+  semaphore_list = semaphore_listP;
 
 
   pid_t mypid;
@@ -46,7 +44,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   for(int i=0;i<inf_fich->number_of_teams;i++){
     if(childpid==0){
 
-        Team_Manager(inf_fich, team_list, mutex);
+        Team_Manager(inf_fich, team_list, semaphore_list);
         childpid = fork();
    }
    else{

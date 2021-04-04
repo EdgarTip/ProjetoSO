@@ -20,12 +20,13 @@
 
 struct config_fich_struct *inf_fich;
 struct team *team_list;
-sem_t *mutex;
+struct semaphoreStruct *semaphore_list;
 
 
 
 void *carThread(void* team_number){
     int number=*((int *)team_number);
+    writeLog("Car thread created", semaphore_list->mutexFicheiro);
     #ifdef DEBUG
     printf("I %ld created car %d.\n",(long)getpid(),number);
     #endif
@@ -36,15 +37,15 @@ void *carThread(void* team_number){
 
 
 
-void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, sem_t *mutexP){
+void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP){
   #ifdef DEBUG
   printf("Team Manager created with id: %ld\n", (long)getpid());
   #endif
-
+  writeLog("Team Manager process created", semaphore_list->mutexFicheiro);
 
   inf_fich = inf_fichP;
   team_list = team_listP;
-  mutex = mutexP;
+  semaphore_list = semaphore_listP;
 
   int workerId[inf_fich->number_of_cars];
   pthread_t carros[inf_fich->number_of_cars];

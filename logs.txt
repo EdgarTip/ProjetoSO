@@ -1,1 +1,17 @@
- 15:03:1 Configuration file read
+18:53:34 Configuration file read
+18:53:34 Team Manager process created
+18:53:34 Car thread created
+18:53:34 Car thread created
+18:53:34 Car thread created
+18:53:34 Team Manager process created
+18:53:34 Car thread created
+18:53:34 Car thread created
+18:53:34 Car thread created
+18:53:34 Team Manager process created
+18:53:34 Car thread created
+18:53:34 Car thread created
+18:53:34 Car thread created
+18:53:34 Team Manager process created
+18:53:34 Car thread created
+18:53:34 Car thread created
+18:53:34 Car thread created

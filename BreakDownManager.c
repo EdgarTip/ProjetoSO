@@ -21,10 +21,9 @@
 struct config_fich_struct *inf_fich;
 
 struct team *team_list;
+struct semaphoreStruct *semaphore_list;
 
-sem_t *mutex;
-
-void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, sem_t *mutexP){
+void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP){
 
   #ifdef DEBUG
   printf("Breakdown Manager created with id: %ld\n",(long)getpid());
@@ -32,7 +31,7 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
 
   inf_fich = inf_fichP;
   team_list = team_listP;
-  mutex = mutexP;
+  semaphore_list = semaphore_listP;
 
   #ifdef DEBUG
   printf("Breakdown Manager is out!\n");

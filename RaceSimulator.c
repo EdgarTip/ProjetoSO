@@ -37,7 +37,8 @@ struct config_fich_struct *inf_fich;
 
 struct team *team_list;
 
-sem_t *mutex;
+struct semaphoreStruct *semaphore_list;
+
 
 int shmid;
 
@@ -63,17 +64,29 @@ void teste(){
 
 }
 
-
+void clean(){
+  free(inf_fich);
+  free(semaphore_list);
+  shmdt(team_list);
+  shmctl(shmid, IPC_RMID, NULL);
+  sem_close(semaphore_list->mutexFicheiro);
+  sem_close(semaphore_list->writingMutex);
+  sem_unlink("MUTEX");
+  sem_unlink("WRITING_MUTEX");
+}
 
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(int argc, char* argv[]){
   system(">logs.txt");  //Limpa o ficheiro logs.txt
 
+  semaphore_list = (struct semaphoreStruct*) malloc(sizeof(struct semaphoreStruct));
   sem_unlink("MUTEX");
-  mutex = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
+  semaphore_list->mutexFicheiro = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
+  sem_unlink("WRITING_MUTEX");
+  semaphore_list->writingMutex = sem_open("WRITING_MUTEX", 0_CREAT|0_EXCL,0700,1);
 
   if (argc!=2){
-    writeLog("Error with input arguments. Execution aborted!", mutex);
+    writeLog("Error with input arguments. Execution aborted!", semaphore_list->mutexFicheiro);
   	printf("Invalid number of arguments!\nUse as: executable {name of the configurations file}\n");
   	exit(1);
    }
@@ -83,7 +96,7 @@ int main(int argc, char* argv[]){
    inf_fich=readConfigFile(file_name);
 
 
-   writeLog("Configuration file read", mutex);
+   writeLog("Configuration file read", semaphore_list->mutexFicheiro);
 
 
 
@@ -149,7 +162,7 @@ int main(int argc, char* argv[]){
       printf("---Gerador de Corrida.---\n");
 
       */
-      Race_Manager(inf_fich, team_list, mutex);
+      Race_Manager(inf_fich, team_list, semaphore_list);
 
       #ifdef DEBUG
       printf("Race Manager is out!\n");
@@ -169,7 +182,7 @@ int main(int argc, char* argv[]){
       team_list[3].cars[0].car_number = 9;
 
       */
-      BreakDownManager(inf_fich, team_list, mutex);
+      BreakDownManager(inf_fich, team_list, semaphore_list);
 
       wait(NULL);
       exit(0);
@@ -178,13 +191,8 @@ int main(int argc, char* argv[]){
 
 
 
-  free(inf_fich);
-  shmdt(team_list);
-  shmctl(shmid, IPC_RMID, NULL);
-  sem_close(mutex);
-  sem_unlink("MUTEX");
-
   wait(NULL);
+  clean();
   return 0;
 
 }
