@@ -1,4 +1,3 @@
-#define DEBUG
 
 
 
@@ -96,10 +95,10 @@ int main(int argc, char* argv[]){
    inf_fich=readConfigFile(file_name);
 
 
-   writeLog("SIMULATOR STARTING", semaphore_list->logMutex);
 
-
-
+   #ifdef DEBUG
+   printf("Creating shared memory\n");
+   #endif
 
   //Creates shared memory
   shmid = shmget(IPC_PRIVATE, (sizeof(struct team*) + sizeof(struct car*) * inf_fich->number_of_cars)* inf_fich->number_of_teams, IPC_CREAT|0700);
@@ -111,13 +110,12 @@ int main(int argc, char* argv[]){
       team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams + i +1);
   }
 
+  writeLog("SIMULATOR STARTING", semaphore_list->logMutex);
+
 
   struct car car1 = {10,70,60,19};
   struct car car2 = {20,90,10,90};
   struct car car3 = {100,20,30,80};
-
-
-
 
   writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);
   writingNewCarInSharedMem(team_list, &car2, inf_fich, "Porto", semaphore_list->writingMutex, semaphore_list->logMutex);
@@ -154,9 +152,11 @@ int main(int argc, char* argv[]){
 
 
   wait(NULL);
-  struct car car6 = {30,90,70,65};
-  //writingNewCarInSharedMem(team_list, &car6, inf_fich, "BOAVISTA", semaphore_list->writingMutex);
-  //leituraParaTeste();
+
+  #ifdef DEBUG
+  printf("---SHARED MEMORY ANTES DE ACABAR O SIMULADOR---");
+  #endif
+  leituraParaTeste();
   writeLog("SIMULATOR CLOSING", semaphore_list->logMutex);
   clean();
   return 0;

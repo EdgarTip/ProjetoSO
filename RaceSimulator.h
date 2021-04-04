@@ -1,6 +1,6 @@
 
 #define SIZE 50
-
+#define DEBUG
 
 #include <stdlib.h>
 #include <string.h>

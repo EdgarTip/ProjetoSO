@@ -1,5 +1,4 @@
 
-#define DEBUG
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -24,23 +23,29 @@ struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 
 
-
+//Car thread. For now it dies immediatly after being created
 void *carThread(void* team_number){
     int number=*((int *)team_number);
+
     #ifdef DEBUG
     printf("I %ld created car %d.\n",(long)getpid(),number);
     #endif
+
     pthread_exit(NULL);
     return NULL;
 
 }
 
 
-
+//Team manager. Will create the car threads
 void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP){
   #ifdef DEBUG
   printf("Team Manager created with id: %ld\n", (long)getpid());
   #endif
+
+
+  struct car car6 = {30,90,70,65};
+  writingNewCarInSharedMem(team_list, &car6, inf_fich, "BOAVISTA", semaphore_list->writingMutex);
 
   inf_fich = inf_fichP;
   team_list = team_listP;
