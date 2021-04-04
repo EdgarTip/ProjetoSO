@@ -1,3 +1,6 @@
+//Edgar Filipe Ferreira Duarte 2019216077
+//Pedro Guilherme da Cruz Ferreira 2018277677
+
 
 //COMPILE THE CODE USING: gcc RaceSimulator.c RaceManager.c ReadConfig.c  TeamManager.c BreakDownManager.c MultipleProcessActions.c -lpthread -D_REENTRANT -Wall -o exec
 //YOU CAN DEACTIVATE THE DEBUG MESSAGES BY DELITING THE "DEFINE DEBUG" (line 2) IN THE RACESIMULATOR.H FILE

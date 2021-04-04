@@ -1,3 +1,5 @@
+//Edgar Filipe Ferreira Duarte 2019216077
+//Pedro Guilherme da Cruz Ferreira 2018277677
 #define SIZE 50
 #define DEBUG
 
