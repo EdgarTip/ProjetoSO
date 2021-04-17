@@ -12,11 +12,13 @@
 #include <stdio.h>
 #include <sys/fcntl.h>
 #include <semaphore.h>
+#include <signal.h>
 
 #include "RaceSimulator.h"
 
 //Reads the initial file and gives values to the inf_fich struct
 struct config_fich_struct * readConfigFile (char *file_name){
+
   struct config_fich_struct * inf_fich;
 
   inf_fich = (struct config_fich_struct*) malloc(sizeof(struct config_fich_struct));

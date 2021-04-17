@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "RaceSimulator.h"
 #include "RaceManager.h"
@@ -40,6 +41,18 @@ struct semaphoreStruct *semaphore_list;
 
 
 int shmid;
+
+
+void endRace(int signum){
+  printf("RACE IS ENDING!\n");
+
+  pid_t wpid;
+  int status = 0;
+  while ((wpid = wait(&status)) > 0);
+
+  printf("adios\n");
+  exit(0);
+}
 
 //Only for debug purposes will be deleted/changed later
 void leituraParaTeste(){
@@ -75,9 +88,13 @@ void clean(){
   sem_unlink("WRITING_MUTEX");
 }
 
+
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(int argc, char* argv[]){
+
+  signal(SIGINT, endRace);
   system(">logs.txt");  //Limpa o ficheiro logs.txt
+
 
   semaphore_list = (struct semaphoreStruct*) malloc(sizeof(struct semaphoreStruct));
   sem_unlink("MUTEX");
@@ -118,33 +135,23 @@ int main(int argc, char* argv[]){
 
   //Creates RaceManager and BreakDownManager
   if(pid==0){
-
-    int pid2=fork();
     //Creates the RaceManager
-    if(pid2==0){
+    Race_Manager(inf_fich, team_list, semaphore_list);
 
-      Race_Manager(inf_fich, team_list, semaphore_list);
-
-      #ifdef DEBUG
-      printf("Race Manager is out!\n");
-      #endif
-
-      exit(0);
-    }
-    //Creates the break down manager
-    else{
-
-      BreakDownManager(inf_fich, team_list, semaphore_list);
-
-      //The break down manager waits for its child (RaceManager) to die
-      wait(NULL);
-      exit(0);
-    }
   }
 
 
+  int pid2=fork();
+  if(pid2==0){
+    //Creates the break down manager
+    BreakDownManager(inf_fich, team_list, semaphore_list);
+
+
+  }
   //The main process waits for its child (BreakDownManager) to die
-  wait(NULL);
+  pid_t wpid;
+  int status = 0;
+  while ((wpid = wait(&status)) > 0);
 
   #ifdef DEBUG
   printf("---SHARED MEMORY BEFORE THE SIMULATOR ENDED---\n");

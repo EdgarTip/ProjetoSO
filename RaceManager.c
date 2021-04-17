@@ -8,6 +8,7 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #include "RaceSimulator.h"
 #include "MultipleProcessActions.h"
@@ -17,8 +18,20 @@ struct config_fich_struct *inf_fich;
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 
+void endRaceManager(int signum){
+  pid_t wpid;
+  int status = 0;
+
+  while ((wpid = wait(&status)) > 0);
+  printf("racemanager died\n");
+  exit(0);
+}
 
 void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP){
+
+  signal(SIGINT, endRaceManager);
+
+
 
   #ifdef DEBUG
   printf("Race_Manager created with id: %ld\n",(long)getpid());
