@@ -1,6 +1,12 @@
-
+//Edgar Filipe Ferreira Duarte 2019216077
+//Pedro Guilherme da Cruz Ferreira 2018277677
 #define SIZE 50
-#define MAX 5
+#define DEBUG
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
 
 struct config_fich_struct{
   int time_units_per_second;
@@ -27,4 +33,10 @@ struct team{
   char team_name[SIZE];
   char box_state[SIZE];
   struct car *cars;
+};
+
+
+struct semaphoreStruct{
+  sem_t *logMutex;
+  sem_t *writingMutex;
 };

@@ -1,23 +1,22 @@
-#define DEBUG
-#define SIZE 50
+//Edgar Filipe Ferreira Duarte 2019216077
+//Pedro Guilherme da Cruz Ferreira 2018277677
 
+
+//COMPILE THE CODE USING: gcc RaceSimulator.c RaceManager.c ReadConfig.c  TeamManager.c BreakDownManager.c MultipleProcessActions.c -lpthread -D_REENTRANT -Wall -o exec
+//YOU CAN DEACTIVATE THE DEBUG MESSAGES BY DELITING THE "DEFINE DEBUG" (line 2) IN THE RACESIMULATOR.H FILE
+
+//TO RUN THE CODE AFTER COMPILING IT USE THE FORMAT : ./exec {configuration file name}
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-#include <sys/ipc.h>
 #include <sys/shm.h>
-#include <semaphore.h> // include POSIX semaphores
+#include <semaphore.h>
 #include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <pthread.h>
-#include "RaceSimulator.h"
 
+#include "RaceSimulator.h"
 #include "RaceManager.h"
 #include "ReadConfig.h"
 #include "MultipleProcessActions.h"
@@ -37,12 +36,13 @@ struct config_fich_struct *inf_fich;
 
 struct team *team_list;
 
-sem_t *mutex;
+struct semaphoreStruct *semaphore_list;
+
 
 int shmid;
 
-//PARA TESTE PARA APAGAR MAIS TARDE
-void teste(){
+//Only for debug purposes will be deleted/changed later
+void leituraParaTeste(){
   for(int i = 0; i< inf_fich->number_of_teams; i++){
     if(strcmp(team_list[i].team_name, "") == 0){
       return;
@@ -63,17 +63,30 @@ void teste(){
 
 }
 
-
+//cleans active memory
+void clean(){
+  free(inf_fich);
+  free(semaphore_list);
+  shmdt(team_list);
+  shmctl(shmid, IPC_RMID, NULL);
+  sem_close(semaphore_list->logMutex);
+  sem_close(semaphore_list->writingMutex);
+  sem_unlink("MUTEX");
+  sem_unlink("WRITING_MUTEX");
+}
 
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(int argc, char* argv[]){
   system(">logs.txt");  //Limpa o ficheiro logs.txt
 
+  semaphore_list = (struct semaphoreStruct*) malloc(sizeof(struct semaphoreStruct));
   sem_unlink("MUTEX");
-  mutex = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
+  semaphore_list->logMutex = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
+  sem_unlink("WRITING_MUTEX");
+  semaphore_list->writingMutex = sem_open("WRITING_MUTEX", O_CREAT|O_EXCL,0700,1);
 
   if (argc!=2){
-    writeLog("Error with input arguments. Execution aborted!", mutex);
+    writeLog("Error with input arguments. Execution aborted!", semaphore_list->logMutex);
   	printf("Invalid number of arguments!\nUse as: executable {name of the configurations file}\n");
   	exit(1);
    }
@@ -83,10 +96,10 @@ int main(int argc, char* argv[]){
    inf_fich=readConfigFile(file_name);
 
 
-   writeLog("Configuration file read", mutex);
 
-
-
+   #ifdef DEBUG
+   printf("Creating shared memory\n");
+   #endif
 
   //Creates shared memory
   shmid = shmget(IPC_PRIVATE, (sizeof(struct team*) + sizeof(struct car*) * inf_fich->number_of_cars)* inf_fich->number_of_teams, IPC_CREAT|0700);
@@ -97,59 +110,20 @@ int main(int argc, char* argv[]){
   for(int i = 0; i < inf_fich->number_of_teams ; i++){
       team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams + i +1);
   }
+  printf("SIMULATION STARTING\n");
+  writeLog("SIMULATOR STARTING", semaphore_list->logMutex);
 
 
-
-
-
-  //Apenas para teste
-  /*
-  strcpy(team_list[0].team_name,"Sporting");
-  strcpy(team_list[0].box_state, "OPEN" ) ;
-  team_list[0].cars[0].speed = 10;
-  team_list[0].cars[0].consumption = 70;
-  team_list[0].cars[0].reliability = 60;
-  team_list[0].cars[0].car_number = 19;
-
-  team_list[0].cars[1].speed = 50;
-  team_list[0].cars[1].consumption = 80;
-  team_list[0].cars[1].reliability = 90;
-  team_list[0].cars[1].car_number = 29;
-
-
-  strcpy(team_list[1].team_name,"Benfica");
-  strcpy(team_list[1].box_state, "Reservado");
-  team_list[1].cars[0].speed = 50;
-  team_list[1].cars[0].consumption = 10;
-  team_list[1].cars[0].reliability = 40;
-  team_list[1].cars[0].car_number = 9;
-
-  strcpy(team_list[2].team_name,"Porto");
-  strcpy(team_list[2].box_state, "OPEN" );
-  team_list[2].cars[0].speed = 90;
-  team_list[2].cars[0].consumption = 100;
-  team_list[2].cars[0].reliability = 70;
-  team_list[2].cars[0].car_number = 8;
-  */
   int pid=fork();
 
   //Creates RaceManager and BreakDownManager
   if(pid==0){
 
     int pid2=fork();
-
+    //Creates the RaceManager
     if(pid2==0){
 
-      /*strcpy(team_list[4].team_name,"Boavista");
-      strcpy(team_list[4].box_state, "OPEN" );
-      team_list[4].cars[0].speed = 90;
-      team_list[4].cars[0].consumption = 100;
-      team_list[4].cars[0].reliability = 70;
-      team_list[4].cars[0].car_number = 8;
-      printf("---Gerador de Corrida.---\n");
-
-      */
-      Race_Manager(inf_fich, team_list, mutex);
+      Race_Manager(inf_fich, team_list, semaphore_list);
 
       #ifdef DEBUG
       printf("Race Manager is out!\n");
@@ -157,34 +131,32 @@ int main(int argc, char* argv[]){
 
       exit(0);
     }
-
+    //Creates the break down manager
     else{
 
-      //printf("---Gerador de Avarias.---\n");
-      /*strcpy(team_list[3].team_name,"Rio Ave");
-      strcpy(team_list[3].box_state, "Reservado");
-      team_list[3].cars[0].speed = 50;
-      team_list[3].cars[0].consumption = 10;
-      team_list[3].cars[0].reliability = 40;
-      team_list[3].cars[0].car_number = 9;
+      BreakDownManager(inf_fich, team_list, semaphore_list);
 
-      */
-      BreakDownManager(inf_fich, team_list, mutex);
-
+      //The break down manager waits for its child (RaceManager) to die
       wait(NULL);
       exit(0);
     }
   }
 
 
-
-  free(inf_fich);
-  shmdt(team_list);
-  shmctl(shmid, IPC_RMID, NULL);
-  sem_close(mutex);
-  sem_unlink("MUTEX");
-
+  //The main process waits for its child (BreakDownManager) to die
   wait(NULL);
+
+  #ifdef DEBUG
+  printf("---SHARED MEMORY BEFORE THE SIMULATOR ENDED---\n");
+  //Only for debugging purposes. We know that there are no protections to the shared memory here, but they
+  //do not need to exist because it is in a controled envirnoment. In future work there will be a mutex
+  //stoping any readers in case someone is changing the shared memory.
+  leituraParaTeste();
+  #endif
+
+  printf("SIMULATION CLOSING\n");
+  writeLog("SIMULATOR CLOSING", semaphore_list->logMutex);
+  clean();
   return 0;
 
 }

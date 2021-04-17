@@ -1,38 +1,30 @@
-#define DEBUG
+//Edgar Filipe Ferreira Duarte 2019216077
+//Pedro Guilherme da Cruz Ferreira 2018277677
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <semaphore.h> // include POSIX semaphores
+#include <semaphore.h>
 #include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <pthread.h>
 
-#include "MultipleProcessActions.h"
 #include "RaceSimulator.h"
+#include "MultipleProcessActions.h"
 #include "TeamManager.h"
 
 struct config_fich_struct *inf_fich;
 
 struct team *team_list;
+struct semaphoreStruct *semaphore_list;
 
-sem_t *mutex;
-
-void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, sem_t *mutexP){
+void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP){
 
   #ifdef DEBUG
   printf("Breakdown Manager created with id: %ld\n",(long)getpid());
   #endif
 
+
   inf_fich = inf_fichP;
   team_list = team_listP;
-  mutex = mutexP;
+  semaphore_list = semaphore_listP;
 
   #ifdef DEBUG
   printf("Breakdown Manager is out!\n");
