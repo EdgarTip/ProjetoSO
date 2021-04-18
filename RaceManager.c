@@ -61,7 +61,6 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   writingNewCarInSharedMem(team_list, &car8, inf_fich, "Benfica", semaphore_list->writingMutex, semaphore_list->logMutex);
   writingNewCarInSharedMem(team_list, &car9, inf_fich, "Porto", semaphore_list->writingMutex, semaphore_list->logMutex);
 
-
   pid_t childpid, wpid;
 
 

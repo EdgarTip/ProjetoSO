@@ -43,16 +43,6 @@ struct semaphoreStruct *semaphore_list;
 int shmid;
 
 
-void endRace(int signum){
-  printf("RACE IS ENDING!\n");
-
-  pid_t wpid;
-  int status = 0;
-  while ((wpid = wait(&status)) > 0);
-
-  printf("adios\n");
-  exit(0);
-}
 
 //Only for debug purposes will be deleted/changed later
 void leituraParaTeste(){
@@ -88,6 +78,17 @@ void clean(){
   sem_unlink("WRITING_MUTEX");
 }
 
+void endRace(int signum){
+  printf("RACE IS ENDING!\n");
+
+  pid_t wpid;
+  int status = 0;
+  while ((wpid = wait(&status)) > 0);
+
+  clean();
+  printf("adios\n");
+  exit(0);
+}
 
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(int argc, char* argv[]){

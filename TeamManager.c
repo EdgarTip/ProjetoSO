@@ -20,32 +20,27 @@ pthread_t *cars;
 
 
 
-
-void carEnd(){
-  printf("Car from team %ld killed.\n",(long)getpid());
-  pthread_exit(NULL);
-}
-
 void teamEnd(int signum){
   for(int j=0; j<inf_fich->number_of_cars; j++){
-
-    pthread_join(cars[j],NULL);
+    pthread_cancel(cars[j]);
   }
   printf("Team %ld killed\n",(long)getpid());
+  free(cars);
+  printf("morreu\n");
   exit(0);
 }
 
 
 //Car thread. For now it dies immediatly after being created
 void *carThread(void* team_number){
-  signal(SIGINT, carEnd);
+
   int number=*((int *)team_number);
 
   #ifdef DEBUG
   printf("I %ld created car %d.\n",(long)getpid(),number);
   #endif
   printf("i am waiting\n");
-  sleep(10);
+
   pthread_exit(NULL);
   return NULL;
 
@@ -79,5 +74,6 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
     pthread_join(cars[j],NULL);
   }
 
+  free(cars);
   return;
 }
