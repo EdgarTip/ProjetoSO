@@ -19,6 +19,7 @@ struct semaphoreStruct *semaphore_list;
 void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP){
 
   signal(SIGINT, SIG_IGN);
+  signal(SIGTSTP, SIG_IGN);
 
   #ifdef DEBUG
   printf("Breakdown Manager created with id: %ld\n",(long)getpid());

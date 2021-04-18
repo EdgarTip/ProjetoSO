@@ -30,7 +30,7 @@ void endRaceManager(int signum){
 void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP){
 
   signal(SIGINT, endRaceManager);
-
+  signal(SIGTSTP, SIG_IGN);
 
 
   #ifdef DEBUG
@@ -42,15 +42,15 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   semaphore_list = semaphore_listP;
 
   //For testing purposes!
-  struct car car1 = {10,70,60,19};
-  struct car car2 = {20,90,10,90};
-  struct car car3 = {100,20,30,80};
-  struct car car4 = {50,30,10,70};
-  struct car car5 = {60,60,60,60};
-  struct car car6 = {30,90,70,65};
-  struct car car7 = {40,40,100,20};
-  struct car car8 = {50,90,30,50};
-  struct car car9 = {70,50,10,35};
+  struct car car1 = {10,70,60,19,0,0,0};
+  struct car car2 = {20,90,10,90,0,0,0};
+  struct car car3 = {100,20,30,80,0,0,0};
+  struct car car4 = {50,30,10,70,0,0,0};
+  struct car car5 = {60,60,60,60,0,0,0};
+  struct car car6 = {30,90,70,65,0,0,0};
+  struct car car7 = {40,40,100,20,0,0,0};
+  struct car car8 = {50,90,30,50,0,0,0};
+  struct car car9 = {70,50,10,35,0,0,0};
   writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);
   writingNewCarInSharedMem(team_list, &car2, inf_fich, "Porto", semaphore_list->writingMutex, semaphore_list->logMutex);
   writingNewCarInSharedMem(team_list, &car3, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);

@@ -54,7 +54,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   #ifdef DEBUG
   printf("Team Manager created with id: %ld\n", (long)getpid());
   #endif
-  sleep(1);
+
 
   inf_fich = inf_fichP;
   team_list = team_listP;
@@ -75,5 +75,6 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   }
 
   free(cars);
+  sleep(4);
   return;
 }

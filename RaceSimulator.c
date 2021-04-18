@@ -90,10 +90,18 @@ void endRace(int signum){
   exit(0);
 }
 
+void printStatistics(int signum){
+
+  readStatistics(team_list, semaphore_list);
+
+}
+
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(int argc, char* argv[]){
 
   signal(SIGINT, endRace);
+  signal(SIGTSTP, printStatistics);
+
   system(">logs.txt");  //Limpa o ficheiro logs.txt
 
 
