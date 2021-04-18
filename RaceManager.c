@@ -68,7 +68,6 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
 
   int status = 0;
-  printf("eoiuioe uioewquio \n");
   printf("NUMBER TEAMS %d\n", inf_fich->number_of_teams);
   //Creates the team processes, 1 for each team.
   for(int i=0;i<inf_fich->number_of_teams;i++){

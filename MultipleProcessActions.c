@@ -144,8 +144,8 @@ void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list,
   getTop5Teams(inf_fich, team_list, top5Teams);
 
 
-  for(int i = 1; i<=5; i++){
-    printf("Lugar: %d, Número Carro: %d, Nome Equipa: %s, Número Voltas: %d, Número de Paragens na Box: %d\n", i, team_list[top5Teams[i][0]].cars[top5Teams[i][1]].car_number
+  for(int i = 0; i<5; i++){
+    printf("Lugar: %d, Número Carro: %d, Nome Equipa: %s, Número Voltas: %d, Número de Paragens na Box: %d\n", i+1, team_list[top5Teams[i][0]].cars[top5Teams[i][1]].car_number
                                                                                                               , team_list[top5Teams[i][0]].team_name
                                                                                                               , team_list[top5Teams[i][0]].cars[top5Teams[i][1]].number_of_laps
                                                                                                               , team_list[top5Teams[i][0]].cars[top5Teams[i][1]].amount_breakdown);

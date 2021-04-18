@@ -25,7 +25,7 @@ void teamEnd(int signum){
     pthread_cancel(cars[j]);
   }
   printf("Team %ld killed\n",(long)getpid());
-  free(cars);
+  //free(cars);
   printf("morreu\n");
   exit(0);
 }
@@ -75,6 +75,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   }
 
   free(cars);
-  sleep(4);
+  sleep(5
+  );
   return;
 }
