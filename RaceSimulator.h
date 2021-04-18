@@ -25,7 +25,7 @@ struct car{
   int speed;
   float consumption;
   int reliability;
-  int completed_laps;
+  int number_of_laps;
   int amount_breakdown;
   int times_refull;
 };

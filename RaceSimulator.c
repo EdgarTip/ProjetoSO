@@ -46,6 +46,7 @@ int shmid;
 
 //Only for debug purposes will be deleted/changed later
 void leituraParaTeste(){
+  printf("enteren\n");
   for(int i = 0; i< inf_fich->number_of_teams; i++){
     if(strcmp(team_list[i].team_name, "") == 0){
       return;
@@ -54,7 +55,7 @@ void leituraParaTeste(){
       if(team_list[i].cars[j].speed ==0){
         break;
       }
-      printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %d\n Car reliability: %d\n", team_list[i].team_name
+      printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %.2f\n Car reliability: %d\n", team_list[i].team_name
                                                                                                                        , team_list[i].box_state
                                                                                                                        , team_list[i].cars[j].car_number
                                                                                                                        , team_list[i].cars[j].speed
@@ -74,8 +75,10 @@ void clean(){
   shmctl(shmid, IPC_RMID, NULL);
   sem_close(semaphore_list->logMutex);
   sem_close(semaphore_list->writingMutex);
+  sem_close(semaphore_list->readingMutex);
   sem_unlink("MUTEX");
   sem_unlink("WRITING_MUTEX");
+  sem_unlink("READING_MUTEX");
 }
 
 void endRace(int signum){
@@ -92,7 +95,7 @@ void endRace(int signum){
 
 void printStatistics(int signum){
 
-  readStatistics(team_list, semaphore_list);
+  readStatistics(inf_fich, team_list, semaphore_list);
 
 }
 
@@ -110,6 +113,9 @@ int main(int argc, char* argv[]){
   semaphore_list->logMutex = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
   sem_unlink("WRITING_MUTEX");
   semaphore_list->writingMutex = sem_open("WRITING_MUTEX", O_CREAT|O_EXCL,0700,1);
+  sem_unlink("READING_MUTEX");
+  semaphore_list->readingMutex = sem_open("READING_MUTEX", O_CREAT|O_EXCL,0700,1);
+
 
   if (argc!=2){
     writeLog("Error with input arguments. Execution aborted!", semaphore_list->logMutex);

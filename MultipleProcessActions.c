@@ -33,11 +33,14 @@ void writeLog(char * string, sem_t *mutex){
 
 
 void writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct config_fich_struct *inf_fich, char *team_name, struct semaphoreStruct *semaphore_list){
+  printf("%d\n",inf_fich->number_of_teams);
 
   sem_wait(semaphore_list->writingMutex);
+
   char carLog[200];
   for(int i=0; i<inf_fich->number_of_teams; i++){
     //a team with the given name was found
+    printf("attemp %d",i);
     if(strcmp(team_list[i].team_name,team_name)==0){
       for(int j = 0; j<inf_fich->number_of_cars; j++){
 
@@ -75,26 +78,88 @@ void writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struc
   sem_post(semaphore_list->writingMutex);
 }
 
-//Reads from the shared memory
-void readSharedmemory(struct team *team_list, struct semaphoreStruct *semaphore_list){
 
 
+void getTop5Teams(struct config_fich_struct *inf_fich, struct team *team_list, int top5Teams[5][2]){
 
+  for(int i= 0; i < inf_fich->number_of_teams; i++){
+
+    for(int j = 0; j < team_list[i].number_of_cars; j++){
+      for(int k = 0; k < 5; k++){
+
+        //First sees if there is an empty space, then sees if its value is superior to another
+        if(top5Teams[k][0]==-1){
+          top5Teams[k][0] = i;
+          top5Teams[k][1] = j;
+          break;
+        }
+        else if(team_list[i].cars[j].number_of_laps > team_list[top5Teams[k][0]].cars[top5Teams[k][1]].number_of_laps){
+          int temp1 = top5Teams[k][0];
+          int temp2 = top5Teams[k][1];
+
+          int temp3 = 0;
+          int temp4 = 0;
+          //get the index to the team and car of the current value
+          top5Teams[k][0] = i;
+          top5Teams[k][1] = j;
+
+          for(int l = k+1; l< 5;l++){
+            if(top5Teams[l][0] == -1){
+              top5Teams[l][0] = temp1;
+              top5Teams[l][1] = temp2;
+              break;
+            }
+            temp3 = top5Teams[l][0];
+            temp4 = top5Teams[l][1];
+
+            top5Teams[l][0] = temp1;
+            top5Teams[l][1] = temp2;
+
+            temp1 = temp3;
+            temp2 = temp4;
+          }
+          break;
+        }
+      }
+    }
+  }
 }
 //Prints the statistics of a race (could be midway or at the end). This has priority over writing actions
-void readStatistics(struct team *team_list, struct semaphoreStruct *semaphore_list){
+void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list, struct semaphoreStruct *semaphore_list){
 
-  sem_wait(semaphore_list.readingMutex);
 
-  ++team_list.team[0].number_readers;
+  sem_wait(semaphore_list->readingMutex);
 
-  if(team_list.team[0].number_readers == 1){
-    sem_wait(semaphore_list.writingMutex);
+  ++team_list[0].number_readers;
+
+  if(team_list[0].number_readers == 1){
+    sem_wait(semaphore_list->writingMutex);
   }
 
-  sem_post(semaphore_list.readingMutex);
+  sem_post(semaphore_list->readingMutex);
 
-  int top5Teams[5][2] = {{NULL,NULL},{NULL,NULL},{NULL,NULL},{NULL,NULL},{NULL,NULL}};
-  for( int i= 0; i < )
+  //First line for team index second line for car index
+  int top5Teams[5][2] = {{-1,-1},{-1,-1},{-1,-1},{-1,-1},{-1,-1}};
+
+  getTop5Teams(inf_fich, team_list, top5Teams);
+
+
+  for(int i = 1; i<=5; i++){
+    printf("Lugar: %d, Número Carro: %d, Nome Equipa: %s, Número Voltas: %d, Número de Paragens na Box: %d\n", i, team_list[top5Teams[i][0]].cars[top5Teams[i][1]].car_number
+                                                                                                              , team_list[top5Teams[i][0]].team_name
+                                                                                                              , team_list[top5Teams[i][0]].cars[top5Teams[i][1]].number_of_laps
+                                                                                                              , team_list[top5Teams[i][0]].cars[top5Teams[i][1]].amount_breakdown);
+  }
+
+  sem_wait(semaphore_list->readingMutex);
+
+  --team_list[0].number_readers;
+
+  if(team_list[0].number_readers == 0){
+    sem_post(semaphore_list->writingMutex);
+  }
+
+  sem_post(semaphore_list->readingMutex);
+
 
 }

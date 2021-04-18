@@ -42,6 +42,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   semaphore_list = semaphore_listP;
 
   //For testing purposes!
+
   struct car car1 = {10,70,60,19,0,0,0};
   struct car car2 = {20,90,10,90,0,0,0};
   struct car car3 = {100,20,30,80,0,0,0};
@@ -51,21 +52,24 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   struct car car7 = {40,40,100,20,0,0,0};
   struct car car8 = {50,90,30,50,0,0,0};
   struct car car9 = {70,50,10,35,0,0,0};
-  writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car2, inf_fich, "Porto", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car3, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car4, inf_fich, "Benfica", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car5, inf_fich, "Sporting", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car6, inf_fich, "Porto", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car7, inf_fich, "Benfica", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car8, inf_fich, "Benfica", semaphore_list->writingMutex, semaphore_list->logMutex);
-  writingNewCarInSharedMem(team_list, &car9, inf_fich, "Porto", semaphore_list->writingMutex, semaphore_list->logMutex);
+
+  printf("eoiuioe uioewquio \n");
+  writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car2, inf_fich, "Porto", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car3, inf_fich, "Sporting", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car4, inf_fich, "Benfica", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car5, inf_fich, "Sporting", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car6, inf_fich, "Porto", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car7, inf_fich, "Benfica", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car8, inf_fich, "Benfica", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car9, inf_fich, "Porto", semaphore_list);
 
   pid_t childpid, wpid;
 
 
   int status = 0;
-
+  printf("eoiuioe uioewquio \n");
+  printf("NUMBER TEAMS %d\n", inf_fich->number_of_teams);
   //Creates the team processes, 1 for each team.
   for(int i=0;i<inf_fich->number_of_teams;i++){
     childpid = fork();
