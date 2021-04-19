@@ -43,26 +43,33 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
   //For testing purposes!
 
-  struct car car1 = {1,70,60,19,7,0,0};
-  struct car car2 = {2,90,10,90,8,0,0};
-  struct car car3 = {3,20,30,80,10,0,0};
-  struct car car4 = {4,30,10,70,40,0,0};
-  struct car car5 = {5,60,60,60,5,0,0};
-  struct car car6 = {6,90,70,65,3,0,0};
-  struct car car7 = {7,40,100,20,20,0,0};
-  struct car car8 = {8,90,30,50,9,0,0};
-  struct car car9 = {9,50,10,35,39,0,0};
+  struct car car1 = {1,10,10,10,10,10,10,"WAITING"};
+  struct car car2 = {2,20,20,20,20,20,20,"WAITING"};
+  struct car car3 = {3,30,30,30,30,30,30,"RACING"};
+  struct car car4 = {4,40,40,40,40,40,40,"IN BOX"};
+  struct car car5 = {5,50,50,50,50,50,50,"RACING"};
+  struct car car6 = {6,60,60,60,60,60,60,"GAVE UP"};
+  struct car car7 = {7,70,70,70,70,70,70,"SAFETY MODE"};
+  struct car car8 = {8,80,80,80,80,80,80,"RACING"};
+  struct car car9 = {9,90,90,90,90,90,90,"ENDED"};
+  struct car car10 = {7,70,70,70,70,70,70,"SAFETY MODE"};
+  struct car car11 = {8,80,80,80,80,80,80,"RACING"};
+  struct car car12 = {9,90,90,90,90,90,90,"ENDED"};
 
-  printf("eoiuioe uioewquio \n");
+
   writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car2, inf_fich, "Porto", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car2, inf_fich, "Sporting", semaphore_list);
   writingNewCarInSharedMem(team_list, &car3, inf_fich, "Sporting", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car4, inf_fich, "Benfica", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car5, inf_fich, "Sporting", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car4, inf_fich, "Porto", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car5, inf_fich, "Porto", semaphore_list);
   writingNewCarInSharedMem(team_list, &car6, inf_fich, "Porto", semaphore_list);
   writingNewCarInSharedMem(team_list, &car7, inf_fich, "Benfica", semaphore_list);
   writingNewCarInSharedMem(team_list, &car8, inf_fich, "Benfica", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car9, inf_fich, "Porto", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car9, inf_fich, "Benfica", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car10, inf_fich, "Sporting", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car11, inf_fich, "Boavista", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car12, inf_fich, "Boavista", semaphore_list);
+
 
   pid_t childpid, wpid;
 

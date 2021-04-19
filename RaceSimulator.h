@@ -27,7 +27,8 @@ struct car{
   int reliability;
   int number_of_laps;
   int amount_breakdown;
-  int times_refull;
+  int times_refill;
+  char current_state[SIZE];
 };
 
 

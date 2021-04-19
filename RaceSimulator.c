@@ -51,16 +51,29 @@ void leituraParaTeste(){
     if(strcmp(team_list[i].team_name, "") == 0){
       return;
     }
-    for(int j = 0; j < inf_fich->number_of_cars; j++){
+    for(int j = 0; j < team_list[i].number_of_cars; j++){
       if(team_list[i].cars[j].speed ==0){
         break;
       }
-      printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %.2f\n Car reliability: %d\n", team_list[i].team_name
+      printf("Amount cars: %d\n Box State %s\n number_readers %d\n", team_list[i].number_of_cars, team_list[i].box_state, team_list[i].number_readers );
+      /*printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %.2f\n Car reliability: %d\n Number laps: %d\n Amount Breakdown %d\n Amount reffil:%d\n Car state:%s", team_list[i].team_name
                                                                                                                        , team_list[i].box_state
                                                                                                                        , team_list[i].cars[j].car_number
                                                                                                                        , team_list[i].cars[j].speed
                                                                                                                        , team_list[i].cars[j].consumption
-                                                                                                                       , team_list[i].cars[j].reliability);
+                                                                                                                       , team_list[i].cars[j].reliability
+                                                                                                                       , team_list[i].cars[j].number_of_laps
+                                                                                                                       , team_list[i].cars[j].amount_breakdown
+                                                                                                                       , team_list[i].cars[j].times_refill
+                                                                                                                       , team_list[i].cars[j].current_state);*/
+
+     printf("Team name:       %s\nBox state:       %s\nCar number:      %d\nCar speed:       %d\nCar consumption: %.2f\nCar reliability: %d\n", team_list[i].team_name
+                                                                                                                                                                                                                                       , team_list[i].box_state
+                                                                                                                                                                                                                                        , team_list[i].cars[j].car_number
+                                                                                                                                                                                                                                        , team_list[i].cars[j].speed
+                                                                                                                                                                                                                                        , team_list[i].cars[j].consumption
+                                                                                                                                                                                                                                        , team_list[i].cars[j].reliability);
+      printf("\n");
     }
     printf("-----------\n");
   }
@@ -132,13 +145,15 @@ int main(int argc, char* argv[]){
    #endif
 
   //Creates shared memory
-  shmid = shmget(IPC_PRIVATE, (sizeof(struct team*) + sizeof(struct car*) * inf_fich->number_of_cars)* inf_fich->number_of_teams, IPC_CREAT|0700);
+  shmid = shmget(IPC_PRIVATE, inf_fich->number_of_teams * (sizeof(struct team) + sizeof(struct car) * inf_fich->number_of_cars), IPC_CREAT|0700);
+  printf("Size allocated: %ld\n",inf_fich->number_of_teams * (sizeof(struct team) + sizeof(struct car) * inf_fich->number_of_cars));
   if (shmid < 1) exit(0);
   team_list = (struct team*) shmat(shmid, NULL, 0);
   if (team_list < (struct team*) 1) exit(0);
 
-  for(int i = 0; i < inf_fich->number_of_teams ; i++){
-      team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams + i +1);
+
+  for(int i = 0; i <= inf_fich->number_of_teams ; i++){
+      team_list[i].cars = (struct car*)(team_list + 4  + i * (inf_fich->number_of_cars));
   }
   printf("SIMULATION STARTING\n");
   writeLog("SIMULATOR STARTING", semaphore_list->logMutex);

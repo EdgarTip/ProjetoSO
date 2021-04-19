@@ -43,7 +43,8 @@ void writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struc
 
         //Sees if there is space for the car
         if(team_list[i].cars[j].speed == 0){
-          team_list[i].number_of_cars++;
+          team_list[i].number_of_cars +=1;
+          printf("%d\n",team_list[i].number_of_cars);
           team_list[i].cars[j] = *new_car;
 
           sem_post(semaphore_list->writingMutex);
@@ -121,6 +122,60 @@ void getTop5Teams(struct config_fich_struct *inf_fich, struct team *team_list, i
     }
   }
 }
+
+//gives the indexes of the last team of the team list in terms of amount of laps
+void getLastTeam(struct config_fich_struct *inf_fich, struct team *team_list,  int lastTeam[1][2]){
+
+  for(int i= 0; i < inf_fich->number_of_teams; i++){
+    printf("number: %d\n", inf_fich->number_of_cars);
+    for(int j = 0; j < team_list[i].number_of_cars; j++){
+
+      if(lastTeam[0][0] == -1){
+        lastTeam[0][0] = i;
+        lastTeam[0][1] = j;
+      }
+      printf("Yo %d\n",team_list[i].cars[j].number_of_laps);
+      if(team_list[i].cars[j].number_of_laps < team_list[lastTeam[0][0]].cars[lastTeam[0][1]].number_of_laps){
+        lastTeam[0][0] = i;
+        lastTeam[0][1] = j;
+      }
+    }
+  }
+}
+
+int amountBreakdowns(struct config_fich_struct *inf_fich, struct team *team_list){
+  int total_breakdowns = 0;
+  for(int i = 0 ; i < inf_fich->number_of_teams; i++){
+    for( int j = 0 ; j < team_list[i].number_of_cars; j++){
+      total_breakdowns += team_list[i].cars[j].amount_breakdown;
+    }
+  }
+  return total_breakdowns;
+}
+
+int amountReffil(struct config_fich_struct *inf_fich, struct team *team_list){
+  int total_reffils = 0;
+  for(int i = 0 ; i < inf_fich->number_of_teams; i++){
+    for( int j = 0 ; j < team_list[i].number_of_cars; j++){
+      total_reffils += team_list[i].cars[j].times_refill;
+    }
+  }
+  return total_reffils;
+}
+
+int amountRacing(struct config_fich_struct *inf_fich, struct team *team_list){
+  int total_racing = 0;
+
+  for(int i = 0 ; i < inf_fich->number_of_teams; i++){
+    for( int j = 0 ; j < team_list[i].number_of_cars; j++){
+      if(strcmp(team_list[i].cars[j].current_state, "RACING") == 0 || strcmp(team_list[i].cars[j].current_state, "SAFETY MODE") == 0 ){
+        total_racing++;
+      }
+    }
+  }
+
+  return total_racing;
+}
 //Prints the statistics of a race (could be midway or at the end). This has priority over writing actions
 void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list, struct semaphoreStruct *semaphore_list){
 
@@ -137,9 +192,13 @@ void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list,
 
   //First line for team index second line for car index
   int top5Teams[5][2] = {{-1,-1},{-1,-1},{-1,-1},{-1,-1},{-1,-1}};
+  int lastTeam[1][2] = {{-1,-1}};
 
   getTop5Teams(inf_fich, team_list, top5Teams);
-
+  getLastTeam(inf_fich, team_list, lastTeam);
+  int total_breakdowns = amountBreakdowns(inf_fich, team_list);
+  int total_reffils = amountReffil(inf_fich, team_list);
+  int total_racing = amountRacing(inf_fich, team_list);
 
   for(int i = 0; i<5; i++){
     printf("Lugar: %d, Número Carro: %d, Nome Equipa: %s, Número Voltas: %d, Número de Paragens na Box: %d\n", i+1, team_list[top5Teams[i][0]].cars[top5Teams[i][1]].car_number
@@ -148,7 +207,19 @@ void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list,
                                                                                                               , team_list[top5Teams[i][0]].cars[top5Teams[i][1]].amount_breakdown);
   }
 
+  printf("Carro em último lugar: Número Carro: %d, Nome Equipa: %s, Número Voltas: %d, Número de Paragens na Box: %d\n", team_list[lastTeam[0][0]].cars[lastTeam[0][1]].car_number
+                                                                                                            , team_list[lastTeam[0][0]].team_name
+                                                                                                            , team_list[lastTeam[0][0]].cars[lastTeam[0][1]].number_of_laps
+                                                                                                            , team_list[lastTeam[0][0]].cars[lastTeam[0][1]].amount_breakdown);
+
+
+  printf("Quantidade de avarias: %d\n", total_breakdowns);
+  printf("Quantidade de reabastecimentos: %d\n", total_reffils);
+  printf("Quantidade de carros na pista: %d\n", total_racing);
+
   sem_wait(semaphore_list->readingMutex);
+
+
 
   --team_list[0].number_readers;
 

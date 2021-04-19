@@ -75,7 +75,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   }
 
   free(cars);
-  sleep(5
-  );
+
+  
   return;
 }
