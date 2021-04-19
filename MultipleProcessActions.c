@@ -6,41 +6,38 @@
 #include <stdio.h>
 #include <signal.h>
 #include <semaphore.h>
+#include <time.h>
 #include "RaceSimulator.h"
 
+
 void writeLog(char * string, sem_t *mutex){
-  char buffer[200];
+  char buffer[550];
+  FILE * fp;
+  fp = fopen("logs.txt","a");
 
+  time_t rawtime;
+  struct tm * timeinfo;
 
-  sprintf(buffer, "date|cut -c17-24 >> logs.txt ; sed -i '$ s/$/ %s/' logs.txt; ",string);
+  time ( &rawtime );
+  timeinfo = localtime ( &rawtime );
+  sprintf(buffer,"%d:%d:%d %s\n",timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec,string);
 
-
-  /* https://unix.stackexchange.com/questions/412835/append-text-with-echo-without-new-line
-  sed -i '$ s/$/abc/' file.txt
-      -i - modify the file inplace
-      $ - indicate the last record/line
-      s/$/abc/ - substitute the end of the line $ with substring abc (for the last record)
-
-  */
+  //printf("Escrevi no ficheiro: %s",buffer);
 
   sem_wait(mutex);
-
-  system(buffer);
-
+  fprintf(fp,"%s",buffer);
   sem_post(mutex);
-
+  fclose(fp);
 }
 
 
 void writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct config_fich_struct *inf_fich, char *team_name, struct semaphoreStruct *semaphore_list){
-  printf("%d\n",inf_fich->number_of_teams);
 
   sem_wait(semaphore_list->writingMutex);
 
   char carLog[200];
   for(int i=0; i<inf_fich->number_of_teams; i++){
     //a team with the given name was found
-    printf("attemp %d",i);
     if(strcmp(team_list[i].team_name,team_name)==0){
       for(int j = 0; j<inf_fich->number_of_cars; j++){
 

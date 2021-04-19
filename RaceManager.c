@@ -43,15 +43,15 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
   //For testing purposes!
 
-  struct car car1 = {10,70,60,19,0,0,0};
-  struct car car2 = {20,90,10,90,0,0,0};
-  struct car car3 = {100,20,30,80,0,0,0};
-  struct car car4 = {50,30,10,70,0,0,0};
-  struct car car5 = {60,60,60,60,0,0,0};
-  struct car car6 = {30,90,70,65,0,0,0};
-  struct car car7 = {40,40,100,20,0,0,0};
-  struct car car8 = {50,90,30,50,0,0,0};
-  struct car car9 = {70,50,10,35,0,0,0};
+  struct car car1 = {1,70,60,19,7,0,0};
+  struct car car2 = {2,90,10,90,8,0,0};
+  struct car car3 = {3,20,30,80,10,0,0};
+  struct car car4 = {4,30,10,70,40,0,0};
+  struct car car5 = {5,60,60,60,5,0,0};
+  struct car car6 = {6,90,70,65,3,0,0};
+  struct car car7 = {7,40,100,20,20,0,0};
+  struct car car8 = {8,90,30,50,9,0,0};
+  struct car car9 = {9,50,10,35,39,0,0};
 
   printf("eoiuioe uioewquio \n");
   writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list);
