@@ -44,7 +44,6 @@ void writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struc
         //Sees if there is space for the car
         if(team_list[i].cars[j].speed == 0){
           team_list[i].number_of_cars +=1;
-          printf("%d\n",team_list[i].number_of_cars);
           team_list[i].cars[j] = *new_car;
 
           sem_post(semaphore_list->writingMutex);
@@ -127,14 +126,12 @@ void getTop5Teams(struct config_fich_struct *inf_fich, struct team *team_list, i
 void getLastTeam(struct config_fich_struct *inf_fich, struct team *team_list,  int lastTeam[1][2]){
 
   for(int i= 0; i < inf_fich->number_of_teams; i++){
-    printf("number: %d\n", inf_fich->number_of_cars);
     for(int j = 0; j < team_list[i].number_of_cars; j++){
 
       if(lastTeam[0][0] == -1){
         lastTeam[0][0] = i;
         lastTeam[0][1] = j;
       }
-      printf("Yo %d\n",team_list[i].cars[j].number_of_laps);
       if(team_list[i].cars[j].number_of_laps < team_list[lastTeam[0][0]].cars[lastTeam[0][1]].number_of_laps){
         lastTeam[0][0] = i;
         lastTeam[0][1] = j;

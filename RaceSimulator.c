@@ -100,6 +100,7 @@ void endRace(int signum){
   pid_t wpid;
   int status = 0;
   while ((wpid = wait(&status)) > 0);
+  readStatistics(inf_fich, team_list, semaphore_list);
   clean();
   exit(0);
 }
