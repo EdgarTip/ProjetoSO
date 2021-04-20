@@ -2,6 +2,7 @@
 //Pedro Guilherme da Cruz Ferreira 2018277677
 #define SIZE 50
 #define DEBUG
+#define PIPE_NAME "pipe"
 
 #include <stdlib.h>
 #include <string.h>
