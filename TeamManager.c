@@ -48,8 +48,11 @@ void *carThread(void* team_number){
 
 
 //Team manager. Will create the car threads
-void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP){
+void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, int channel[2]){
   signal(SIGINT, teamEnd);
+
+  int toSend=2;
+  write(channel[1],&toSend,sizeof(int));
 
   #ifdef DEBUG
   printf("Team Manager created with id: %ld\n", (long)getpid());

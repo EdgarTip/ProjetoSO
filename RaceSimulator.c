@@ -16,7 +16,8 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
-
+#include <errno.h>
+#include <sys/stat.h>
 #include "RaceSimulator.h"
 #include "RaceManager.h"
 #include "ReadConfig.h"
@@ -96,7 +97,6 @@ void clean(){
 
 void endRace(int signum){
   printf("RACE IS ENDING!\n");
-
   pid_t wpid;
   int status = 0;
   while ((wpid = wait(&status)) > 0);
@@ -146,8 +146,7 @@ int main(int argc, char* argv[]){
    #endif
 
   //Creates shared memory
-  shmid = shmget(IPC_PRIVATE, inf_fich->number_of_teams * (sizeof(struct team) + sizeof(struct car) * inf_fich->number_of_cars), IPC_CREAT|0700);
-  printf("Size allocated: %ld\n",inf_fich->number_of_teams * (sizeof(struct team) + sizeof(struct car) * inf_fich->number_of_cars));
+  shmid = shmget(IPC_PRIVATE, inf_fich->number_of_teams * (sizeof(struct team*) + sizeof(struct car*) * inf_fich->number_of_cars), IPC_CREAT|0700);
   if (shmid < 1) exit(0);
   team_list = (struct team*) shmat(shmid, NULL, 0);
   if (team_list < (struct team*) 1) exit(0);
@@ -177,6 +176,21 @@ int main(int argc, char* argv[]){
 
 
   }
+  int fd;
+  printf("Opening named pipe.\n");
+  if ((fd = open(PIPE_NAME, O_WRONLY)) < 0) {
+    perror("Cannot open pipe for writing: ");
+    exit(0);
+  }
+  printf("Named pipe open.\n");
+  // Do some work
+  char toSend[512];  //="ADDCAR TEAM: A, CAR: 20, SPEED: 30, CONSUMPTION: 0.04, RELIABILITY: 95";
+  while(1){
+    scanf("%[^\n]%*c", toSend);
+    printf("[RaceSimulator] Sending (%s)\n",toSend);
+    write(fd, toSend, sizeof(toSend));
+  }
+
   //The main process waits for its child (BreakDownManager) to die
   pid_t wpid;
   int status = 0;

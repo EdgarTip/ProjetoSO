@@ -31,7 +31,7 @@ void writeLog(char * string, sem_t *mutex){
 }
 
 
-void writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct config_fich_struct *inf_fich, char *team_name, struct semaphoreStruct *semaphore_list){
+int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct config_fich_struct *inf_fich, char *team_name, struct semaphoreStruct *semaphore_list){
 
   sem_wait(semaphore_list->writingMutex);
 
@@ -49,12 +49,13 @@ void writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struc
           sem_post(semaphore_list->writingMutex);
           sprintf(carLog,"NEW CAR LOADED => TEAM: %s, CAR: %d, SPEED: %d, CONSUMPTION: %.2f, RELIABILITY: %d",team_name,new_car->car_number, new_car->speed,new_car->consumption,new_car->reliability);
           writeLog(carLog,semaphore_list->logMutex);
-          return;
+          return 1;
         }
       }
       printf("WARNING! THERE WAS NO SPACE IN THE SELECTED TEAM. THE CAR WILL NOT BE CREATED!\n");
+      writeLog("WARNING! THERE WAS NO SPACE IN THE SELECTED TEAM. THE CAR WILL NOT BE CREATED!", semaphore_list->logMutex);
       sem_post(semaphore_list->writingMutex);
-      return;
+      return 0;
     }
     //No team with the given name exist and there is enough space to create a new team
     else if(strcmp(team_list[i].team_name,"") == 0){
@@ -68,11 +69,13 @@ void writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struc
       sem_post(semaphore_list->writingMutex);
       sprintf(carLog,"NEW CAR LOADED => TEAM: %s, CAR: %d, SPEED: %d, CONSUMPTION: %.2f, RELIABILITY: %d",team_name,new_car->car_number, new_car->speed,new_car->consumption,new_car->reliability);
       writeLog(carLog,semaphore_list->logMutex);
-      return;
+      return 1;
     }
   }
   printf("WARNING! THERE WAS NO SPACE TO CREATE A NEW TEAM. THE CAR WILL NOT BE CREATED!\n");
+  writeLog("WARNING! THERE WAS NO SPACE TO CREATE A NEW TEAM. THE CAR WILL NOT BE CREATED!",semaphore_list->logMutex);
   sem_post(semaphore_list->writingMutex);
+  return 0;
 }
 
 
