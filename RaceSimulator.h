@@ -23,8 +23,12 @@ struct config_fich_struct{
 struct car{
   int car_number;
   int speed;
-  int consumption;
+  float consumption;
   int reliability;
+  int number_of_laps;
+  int amount_breakdown;
+  int times_refill;
+  char current_state[SIZE];
 };
 
 
@@ -32,6 +36,8 @@ struct car{
 struct team{
   char team_name[SIZE];
   char box_state[SIZE];
+  int number_of_cars;
+  int number_readers;
   struct car *cars;
 };
 
@@ -39,4 +45,5 @@ struct team{
 struct semaphoreStruct{
   sem_t *logMutex;
   sem_t *writingMutex;
+  sem_t *readingMutex;
 };

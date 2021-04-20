@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "RaceSimulator.h"
 #include "RaceManager.h"
@@ -41,22 +42,38 @@ struct semaphoreStruct *semaphore_list;
 
 int shmid;
 
+
+
 //Only for debug purposes will be deleted/changed later
 void leituraParaTeste(){
+  printf("enteren\n");
   for(int i = 0; i< inf_fich->number_of_teams; i++){
     if(strcmp(team_list[i].team_name, "") == 0){
       return;
     }
-    for(int j = 0; j < inf_fich->number_of_cars; j++){
+    for(int j = 0; j < team_list[i].number_of_cars; j++){
       if(team_list[i].cars[j].speed ==0){
         break;
       }
-      printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %d\n Car reliability: %d\n", team_list[i].team_name
+      printf("Amount cars: %d\n Box State %s\n number_readers %d\n", team_list[i].number_of_cars, team_list[i].box_state, team_list[i].number_readers );
+      /*printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %.2f\n Car reliability: %d\n Number laps: %d\n Amount Breakdown %d\n Amount reffil:%d\n Car state:%s", team_list[i].team_name
                                                                                                                        , team_list[i].box_state
                                                                                                                        , team_list[i].cars[j].car_number
                                                                                                                        , team_list[i].cars[j].speed
                                                                                                                        , team_list[i].cars[j].consumption
-                                                                                                                       , team_list[i].cars[j].reliability);
+                                                                                                                       , team_list[i].cars[j].reliability
+                                                                                                                       , team_list[i].cars[j].number_of_laps
+                                                                                                                       , team_list[i].cars[j].amount_breakdown
+                                                                                                                       , team_list[i].cars[j].times_refill
+                                                                                                                       , team_list[i].cars[j].current_state);*/
+
+     printf("Team name:       %s\nBox state:       %s\nCar number:      %d\nCar speed:       %d\nCar consumption: %.2f\nCar reliability: %d\n", team_list[i].team_name
+                                                                                                                                                                                                                                       , team_list[i].box_state
+                                                                                                                                                                                                                                        , team_list[i].cars[j].car_number
+                                                                                                                                                                                                                                        , team_list[i].cars[j].speed
+                                                                                                                                                                                                                                        , team_list[i].cars[j].consumption
+                                                                                                                                                                                                                                        , team_list[i].cars[j].reliability);
+      printf("\n");
     }
     printf("-----------\n");
   }
@@ -71,19 +88,46 @@ void clean(){
   shmctl(shmid, IPC_RMID, NULL);
   sem_close(semaphore_list->logMutex);
   sem_close(semaphore_list->writingMutex);
+  sem_close(semaphore_list->readingMutex);
   sem_unlink("MUTEX");
   sem_unlink("WRITING_MUTEX");
+  sem_unlink("READING_MUTEX");
+}
+
+void endRace(int signum){
+  printf("RACE IS ENDING!\n");
+
+  pid_t wpid;
+  int status = 0;
+  while ((wpid = wait(&status)) > 0);
+  readStatistics(inf_fich, team_list, semaphore_list);
+  clean();
+  exit(0);
+}
+
+void printStatistics(int signum){
+
+  readStatistics(inf_fich, team_list, semaphore_list);
+
 }
 
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(int argc, char* argv[]){
+
+  signal(SIGINT, endRace);
+  signal(SIGTSTP, printStatistics);
+
   system(">logs.txt");  //Limpa o ficheiro logs.txt
+
 
   semaphore_list = (struct semaphoreStruct*) malloc(sizeof(struct semaphoreStruct));
   sem_unlink("MUTEX");
   semaphore_list->logMutex = sem_open("MUTEX", O_CREAT|O_EXCL,0700,1);
   sem_unlink("WRITING_MUTEX");
   semaphore_list->writingMutex = sem_open("WRITING_MUTEX", O_CREAT|O_EXCL,0700,1);
+  sem_unlink("READING_MUTEX");
+  semaphore_list->readingMutex = sem_open("READING_MUTEX", O_CREAT|O_EXCL,0700,1);
+
 
   if (argc!=2){
     writeLog("Error with input arguments. Execution aborted!", semaphore_list->logMutex);
@@ -102,13 +146,15 @@ int main(int argc, char* argv[]){
    #endif
 
   //Creates shared memory
-  shmid = shmget(IPC_PRIVATE, (sizeof(struct team*) + sizeof(struct car*) * inf_fich->number_of_cars)* inf_fich->number_of_teams, IPC_CREAT|0700);
+  shmid = shmget(IPC_PRIVATE, inf_fich->number_of_teams * (sizeof(struct team) + sizeof(struct car) * inf_fich->number_of_cars), IPC_CREAT|0700);
+  printf("Size allocated: %ld\n",inf_fich->number_of_teams * (sizeof(struct team) + sizeof(struct car) * inf_fich->number_of_cars));
   if (shmid < 1) exit(0);
   team_list = (struct team*) shmat(shmid, NULL, 0);
   if (team_list < (struct team*) 1) exit(0);
 
-  for(int i = 0; i < inf_fich->number_of_teams ; i++){
-      team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams + i +1);
+
+  for(int i = 0; i <= inf_fich->number_of_teams ; i++){
+      team_list[i].cars = (struct car*)(team_list + 4  + i * (inf_fich->number_of_cars));
   }
   printf("SIMULATION STARTING\n");
   writeLog("SIMULATOR STARTING", semaphore_list->logMutex);
@@ -118,33 +164,23 @@ int main(int argc, char* argv[]){
 
   //Creates RaceManager and BreakDownManager
   if(pid==0){
-
-    int pid2=fork();
     //Creates the RaceManager
-    if(pid2==0){
+    Race_Manager(inf_fich, team_list, semaphore_list);
 
-      Race_Manager(inf_fich, team_list, semaphore_list);
-
-      #ifdef DEBUG
-      printf("Race Manager is out!\n");
-      #endif
-
-      exit(0);
-    }
-    //Creates the break down manager
-    else{
-
-      BreakDownManager(inf_fich, team_list, semaphore_list);
-
-      //The break down manager waits for its child (RaceManager) to die
-      wait(NULL);
-      exit(0);
-    }
   }
 
 
+  int pid2=fork();
+  if(pid2==0){
+    //Creates the break down manager
+    BreakDownManager(inf_fich, team_list, semaphore_list);
+
+
+  }
   //The main process waits for its child (BreakDownManager) to die
-  wait(NULL);
+  pid_t wpid;
+  int status = 0;
+  while ((wpid = wait(&status)) > 0);
 
   #ifdef DEBUG
   printf("---SHARED MEMORY BEFORE THE SIMULATOR ENDED---\n");

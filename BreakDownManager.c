@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <semaphore.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "RaceSimulator.h"
 #include "MultipleProcessActions.h"
@@ -16,6 +17,9 @@ struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 
 void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP){
+
+  signal(SIGINT, SIG_IGN);
+  signal(SIGTSTP, SIG_IGN);
 
   #ifdef DEBUG
   printf("Breakdown Manager created with id: %ld\n",(long)getpid());
@@ -29,4 +33,5 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
   #ifdef DEBUG
   printf("Breakdown Manager is out!\n");
   #endif
+  exit(0);
 }
