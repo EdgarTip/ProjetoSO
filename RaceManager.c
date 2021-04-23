@@ -21,10 +21,13 @@
 struct config_fich_struct *inf_fich;
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
+int fd;
 
 void endRaceManager(int signum){
   pid_t wpid;
   int status = 0;
+
+  fclose(fd);
 
   while ((wpid = wait(&status)) > 0);
   printf("racemanager died\n");
@@ -86,7 +89,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
   int status = 0;
   int start = 0;
-  
+
   while(1){
 
     char teamName[50];
