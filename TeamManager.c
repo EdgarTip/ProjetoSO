@@ -18,7 +18,7 @@ struct semaphoreStruct *semaphore_list;
 
 pthread_t *cars;
 
-
+pthread_cond_t raceStart=PTHREAD_COND_INITIALIZER;
 
 void teamEnd(int signum){
   for(int j=0; j<inf_fich->number_of_cars; j++){
@@ -41,7 +41,14 @@ void *carThread(void* team_number){
   #endif
   printf("i am waiting\n");
 
+  
+
+
   pthread_exit(NULL);
+
+
+
+
   return NULL;
 
 }

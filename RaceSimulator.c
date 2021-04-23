@@ -93,6 +93,7 @@ void clean(){
   sem_unlink("MUTEX");
   sem_unlink("WRITING_MUTEX");
   sem_unlink("READING_MUTEX");
+
 }
 
 void endRace(int signum){
@@ -149,7 +150,7 @@ int main(int argc, char* argv[]){
   shmid = shmget(IPC_PRIVATE, inf_fich->number_of_teams * (sizeof(struct team*) + sizeof(struct car*) * inf_fich->number_of_cars), IPC_CREAT|0700);
   if (shmid < 1) exit(0);
   team_list = (struct team*) shmat(shmid, NULL, 0);
-  if (team_list < (struct team*) 1) exit(0);
+   if (team_list < (struct team*) 1) exit(0);
 
 
   for(int i = 0; i <= inf_fich->number_of_teams ; i++){
