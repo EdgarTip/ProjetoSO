@@ -12,23 +12,73 @@
 #include "RaceSimulator.h"
 #include "MultipleProcessActions.h"
 
+#define MAX 200
+
 struct config_fich_struct *inf_fich;
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 
 pthread_t *cars;
 
-pthread_cond_t raceStart=PTHREAD_COND_INITIALIZER;
+int team_index;
 
 void teamEnd(int signum){
   for(int j=0; j<inf_fich->number_of_cars; j++){
     pthread_cancel(cars[j]);
   }
   printf("Team %ld killed\n",(long)getpid());
-  //free(cars);
+  free(cars);
   printf("morreu\n");
   exit(0);
 }
+
+//Cars are racing
+void racing(int arrayNumber){
+
+  char logMessage[100];
+  float current_fuel = inf_fich->fuel_capacity;
+  int distance_in_lap = 0;
+  //escrever para o gestor de equipas que o carro começou em corrida com o estado "CORRIDA"
+  while(1){
+
+    //Racing normally
+    if(strcmp(team_list[team_index].cars[arrayNumber].current_state,"CORRIDA") == 0){
+      current_fuel -= team_list[team_index].cars[arrayNumber].consumption;
+      distance_in_lap += team_list[team_index].cars[arrayNumber].speed;
+
+    }
+    //Needs to got to the box
+    else if(strcmp(team_list[team_index].cars[arrayNumber].current_state,"SEGURANCA") == 0){
+      current_fuel -= 0.4 * team_list[team_index].cars[arrayNumber].consumption;
+      distance_in_lap += 0.3 * team_list[team_index].cars[arrayNumber].speed;
+    }
+
+    //Gave up
+    else if(strcmp(team_list[team_index].cars[arrayNumber].current_state,"DESISTENCIA") == 0){
+      sprintf(logMessage, "Car %d from team %s gave up", team_list[team_index].cars[arrayNumber].car_number, team_list[team_index].team_name);
+      writeLog(logMessage,semaphore_list->logMutex, inf_fich->fp);
+      pthread_exit(NULL);
+    }
+
+    //para debugging apagar mais tarde!!!!!!!!!!!!!!!!!!!!!!!!
+    else{
+      printf("ERRO NO CODIGO!!!! %s RECEBIDO!\n",team_list[team_index].cars[arrayNumber].current_state);
+    }
+    //team_list[team_index].cars[arrayNumber].
+
+    if(current_fuel < 4 * ((inf_fich->lap_distance / team_list[team_index].cars[arrayNumber].speed)*team_list[team_index].cars[arrayNumber].consumption)){
+
+    }
+
+    //The car ended the race!
+    if(team_list[team_index].cars[arrayNumber].number_of_laps >= inf_fich->number_of_laps) break;
+
+
+    sleep(1/inf_fich->time_units_per_second);
+  }
+}
+
+
 
 
 //Car thread. For now it dies immediatly after being created
@@ -41,22 +91,20 @@ void *carThread(void* team_number){
   #endif
   printf("i am waiting\n");
 
-  
+  //Have a condition variable
 
+  racing(number);
 
   pthread_exit(NULL);
 
-
-
-
-  return NULL;
 
 }
 
 
 //Team manager. Will create the car threads
-void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, int channel[2]){
-  signal(SIGINT, teamEnd);
+void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, int channel[2],int team_indexP){
+  signal(SIGUSR2, teamEnd);
+  signal(SIGUSR1, SIG_IGN);
 
   int toSend=2;
   write(channel[1],&toSend,sizeof(int));
@@ -65,10 +113,16 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   printf("Team Manager created with id: %ld\n", (long)getpid());
   #endif
 
+  while(1){
+          printf("Team Manager (%d %d) a escrever %d\n",channel[0], channel[1],toSend);
+          write(channel[1],&toSend,sizeof(int));
+          sleep(1);
+  }
 
   inf_fich = inf_fichP;
   team_list = team_listP;
   semaphore_list = semaphore_listP;
+  team_index = team_indexP;
 
   int workerId[inf_fich->number_of_cars];
 

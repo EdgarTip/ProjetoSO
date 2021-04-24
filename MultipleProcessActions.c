@@ -10,24 +10,26 @@
 #include "RaceSimulator.h"
 
 
-void writeLog(char * string, sem_t *mutex){
-  char buffer[550];
-  FILE * fp;
-  fp = fopen("logs.txt","a");
+
+
+void writeLog(char * string, sem_t *mutex,FILE *fp){
+  fflush(stdout);
+  char buffer[550]="";
 
   time_t rawtime;
   struct tm * timeinfo;
 
   time ( &rawtime );
   timeinfo = localtime ( &rawtime );
-  sprintf(buffer,"%d:%d:%d %s\n",timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec,string);
-
-  //printf("Escrevi no ficheiro: %s",buffer);
+  sprintf(buffer,"%.2d:%.2d:%.2d %s\n",timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec,string);
 
   sem_wait(mutex);
+
   fprintf(fp,"%s",buffer);
+  fflush(fp);
   sem_post(mutex);
-  fclose(fp);
+  fflush(stdout);
+
 }
 
 
@@ -48,12 +50,12 @@ int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct
 
           sem_post(semaphore_list->writingMutex);
           sprintf(carLog,"NEW CAR LOADED => TEAM: %s, CAR: %d, SPEED: %d, CONSUMPTION: %.2f, RELIABILITY: %d",team_name,new_car->car_number, new_car->speed,new_car->consumption,new_car->reliability);
-          writeLog(carLog,semaphore_list->logMutex);
+          writeLog(carLog,semaphore_list->logMutex, inf_fich->fp);
           return 1;
         }
       }
       printf("WARNING! THERE WAS NO SPACE IN THE SELECTED TEAM. THE CAR WILL NOT BE CREATED!\n");
-      writeLog("WARNING! THERE WAS NO SPACE IN THE SELECTED TEAM. THE CAR WILL NOT BE CREATED!", semaphore_list->logMutex);
+      writeLog("WARNING! THERE WAS NO SPACE IN THE SELECTED TEAM. THE CAR WILL NOT BE CREATED!", semaphore_list->logMutex, inf_fich->fp);
       sem_post(semaphore_list->writingMutex);
       return 0;
     }
@@ -68,17 +70,15 @@ int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct
 
       sem_post(semaphore_list->writingMutex);
       sprintf(carLog,"NEW CAR LOADED => TEAM: %s, CAR: %d, SPEED: %d, CONSUMPTION: %.2f, RELIABILITY: %d",team_name,new_car->car_number, new_car->speed,new_car->consumption,new_car->reliability);
-      writeLog(carLog,semaphore_list->logMutex);
+      writeLog(carLog,semaphore_list->logMutex, inf_fich->fp);
       return 1;
     }
   }
   printf("WARNING! THERE WAS NO SPACE TO CREATE A NEW TEAM. THE CAR WILL NOT BE CREATED!\n");
-  writeLog("WARNING! THERE WAS NO SPACE TO CREATE A NEW TEAM. THE CAR WILL NOT BE CREATED!",semaphore_list->logMutex);
+  writeLog("WARNING! THERE WAS NO SPACE TO CREATE A NEW TEAM. THE CAR WILL NOT BE CREATED!",semaphore_list->logMutex, inf_fich->fp);
   sem_post(semaphore_list->writingMutex);
   return 0;
 }
-
-
 
 void getTop5Teams(struct config_fich_struct *inf_fich, struct team *team_list, int top5Teams[5][2]){
 

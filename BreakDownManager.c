@@ -20,7 +20,8 @@ struct semaphoreStruct *semaphore_list;
 int start = 0;
 
 void endBreakDown(int signum){
-
+  free(semaphore_list);
+  free(inf_fich);
   #ifdef DEBUG
   printf("Break down manager killed!\n");
   #endif
@@ -72,9 +73,10 @@ void createBreakdowns(){
 
 void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP){
 
-  signal(SIGINT, endBreakDown);
+  signal(SIGINT, SIG_IGN);
   signal(SIGTSTP, SIG_IGN);
-  signal(SIGUSR2,raceStart);
+
+  signal(SIGUSR2,endBreakDown);
 
   #ifdef DEBUG
   printf("Breakdown Manager created with id: %ld\n",(long)getpid());
