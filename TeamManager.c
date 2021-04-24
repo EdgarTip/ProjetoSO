@@ -22,6 +22,8 @@ pthread_t *cars;
 
 int team_index;
 
+int *channel;
+
 void teamEnd(int signum){
   for(int j=0; j<inf_fich->number_of_cars; j++){
     pthread_cancel(cars[j]);
@@ -35,10 +37,14 @@ void teamEnd(int signum){
 //Cars are racing
 void racing(int arrayNumber){
 
-  char logMessage[100];
+  char logMessage[MAX];
+  char update[MAX];
   float current_fuel = inf_fich->fuel_capacity;
   int distance_in_lap = 0;
   //escrever para o gestor de equipas que o carro começou em corrida com o estado "CORRIDA"
+  strcpy(update,"CORRIDA");
+  write(channel[1],update, sizeof(update));
+
   while(1){
 
     //Racing normally
@@ -67,7 +73,10 @@ void racing(int arrayNumber){
     //team_list[team_index].cars[arrayNumber].
 
     if(current_fuel < 4 * ((inf_fich->lap_distance / team_list[team_index].cars[arrayNumber].speed)*team_list[team_index].cars[arrayNumber].consumption)){
-
+      strcpy(update, "SEGURANCA");
+      write(channel[1],update, sizeof(update));
+      
+      sleep(1);
     }
 
     //The car ended the race!
@@ -102,7 +111,7 @@ void *carThread(void* team_number){
 
 
 //Team manager. Will create the car threads
-void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, int channel[2],int team_indexP){
+void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, int channelP[2],int team_indexP){
   signal(SIGUSR2, teamEnd);
   signal(SIGUSR1, SIG_IGN);
 
@@ -113,11 +122,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   printf("Team Manager created with id: %ld\n", (long)getpid());
   #endif
 
-  while(1){
-          printf("Team Manager (%d %d) a escrever %d\n",channel[0], channel[1],toSend);
-          write(channel[1],&toSend,sizeof(int));
-          sleep(1);
-  }
+  channel = channelP;
 
   inf_fich = inf_fichP;
   team_list = team_listP;

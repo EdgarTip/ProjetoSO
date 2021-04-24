@@ -176,6 +176,10 @@ int amountRacing(struct config_fich_struct *inf_fich, struct team *team_list){
 
   return total_racing;
 }
+void updateState(struct team *team_list, struct config_fich_struct *inf_fich,  struct semaphoreStruct *semaphore_list){
+
+
+}
 //Prints the statistics of a race (could be midway or at the end). This has priority over writing actions
 void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list, struct semaphoreStruct *semaphore_list){
 
