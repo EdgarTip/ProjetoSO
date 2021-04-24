@@ -1,4 +1,3 @@
-//Edgar Filipe Ferreira Duarte 2019216077
 //Pedro Guilherme da Cruz Ferreira 2018277677
 
 #include <stdlib.h>
@@ -62,7 +61,14 @@ if( validation != 9 ||
       exit(1);
     }
 
-
+    FILE * fp2;
+    fp2 = fopen("logs.txt","w");
+    if (fp2 == NULL)
+    {
+       perror("Error while opening the file\n");
+       exit(EXIT_FAILURE);
+    }
+    inf_fich->fp=fp2;
 /* printf("%d\n%d, %d\n%d\n%d\n%d\n%d, %d\n%d",(inf_fich->time_units_per_second),
                                             (inf_fich->lap_distance),
                                             (inf_fich->number_of_laps),

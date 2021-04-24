@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include "RaceSimulator.h"
 #include "MultipleProcessActions.h"
@@ -22,28 +23,63 @@ struct config_fich_struct *inf_fich;
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 int fd;
+int *pids;
+int named_pipe_fd;
+int (*channel)[2];
 
 void endRaceManager(int signum){
   pid_t wpid;
   int status = 0;
 
-  fclose(fd);
-
+  for(int i = 0; i < inf_fich->number_of_teams; i++){
+    kill(pids[i], SIGUSR2);
+  }
+  free(pids);
   while ((wpid = wait(&status)) > 0);
   printf("racemanager died\n");
   exit(0);
 }
+void interruptRace(int signum){
+  printf("TO DO\n");
+}
+
+int getFreeChannel(int n, int channel[n][2]){
+    for(int i=0;i<inf_fich->number_of_teams;i++){
+        if(channel[i][0]==0){
+          return i;
+        }
+    }
+    return -1;
+
+}
+
+void *teamThread(void *arg){
+   int channel_number = *((int *) arg);
+  close(channel[channel_number][1]);  //close writing edge
+  int n=0;
+  printf("Estou num ciclo a ler o channel da team %d\n",channel_number);
+    while (1) {
+      	fd_set read_set;
+        FD_ZERO(&read_set);
+        FD_SET(channel[channel_number][0], &read_set);
+        if (select(channel[channel_number][0]+1, &read_set, NULL, NULL, NULL) > 0 ) {
+          read(channel[channel_number][0],&n,sizeof(int));
+          printf("Race Manager (%d) leu %d.\n",channel_number,n);
+       }
+             //sleep(1);
+      }
+
+}
 
 void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP){
 
-  signal(SIGINT, endRaceManager);
+  signal(SIGINT, SIG_IGN);
   signal(SIGTSTP, SIG_IGN);
+  signal(SIGUSR1, interruptRace);
+  signal(SIGUSR2, endRaceManager);
 
   printf("Creating named pipe.\n");
-    if ((mkfifo(PIPE_NAME, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST)) {
-      perror("Cannot create pipe: ");
-      exit(0);
-  }
+
   printf("Named pipe created.\n");
 
   #ifdef DEBUG
@@ -54,6 +90,15 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   team_list = team_listP;
   semaphore_list = semaphore_listP;
 
+  channel=malloc(sizeof(*channel)*inf_fich->number_of_teams);
+  for(int i=0;i<inf_fich->number_of_teams;i++){
+    channel[i][0]=0;
+    channel[i][1]=0;
+  }
+
+  pthread_t team_threads[inf_fich->number_of_teams];
+
+  pids = malloc(sizeof(int) * inf_fich->number_of_teams);
   //For testing purposes!
 
   struct car car1 = {1,10,10,10,10,10,10,"WAITING"};
@@ -79,7 +124,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   writingNewCarInSharedMem(team_list, &car7, inf_fich, "Benfica", semaphore_list);
   writingNewCarInSharedMem(team_list, &car8, inf_fich, "Benfica", semaphore_list);
   writingNewCarInSharedMem(team_list, &car9, inf_fich, "Benfica", semaphore_list);
-//  writingNewCarInSharedMem(team_list, &car10, inf_fich, "Sporting", semaphore_list);
+// writingNewCarInSharedMem(team_list, &car10, inf_fich, "Sporting", semaphore_list);
 //  writingNewCarInSharedMem(team_list, &car11, inf_fich, "Boavista", semaphore_list);
 //  writingNewCarInSharedMem(team_list, &car12, inf_fich, "Boavista", semaphore_list);
 
@@ -87,32 +132,29 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   pid_t childpid, wpid;
 
 
+
+  if ((named_pipe_fd = open(PIPE_NAME, O_RDONLY)) < 0) {
+    perror("Cannot open pipe for reading: ");
+    exit(0);
+  }
+
   int status = 0;
   int start = 0;
 
+  int i = 0;
+  int index_team = 0;
+
+  char teamName[50];
+  char received[512];
   while(1){
-
-    char teamName[50];
-    char received[512];
-    /*NAMED PIPE*/
-    //if ((mkfifo("NAMED_PIPE", O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST)) {
-    //  perror("Cannot create pipe: ");
-    //  exit(0);
-  //  }
-    // Opens the pipe for reading
-
-    int fd;
-    if ((fd = open(PIPE_NAME, O_RDONLY)) < 0) {
-      perror("Cannot open pipe for reading: ");
-      exit(0);
-    }
     // Do some work
 
-      read(fd, received, sizeof(received));
-      printf("[RaceManager] Received (%s)\n", received);
+    read(named_pipe_fd, received, sizeof(received));
+    printf("[RaceManager] Received (%s)\n", received);
     /*NAMED PIPE*/
 
     //char received[512] ="ADDCAR TEAM: A, CAR: 20, SPEED: 30, CONSUMPTION: 0.04, RELIABILITY: 95";
+    //char received[512] ="ADDCAR TEAM: C, CAR: 21, SPEED: 30, CONSUMPTION: 0.04, RELIABILITY: 95";
     //char received[512] ="START RACE!";
     if(strcmp(received,"START RACE!")==0){
         //verificar se o numero de equipas é suficiente => erro no ecra e nos logs
@@ -125,7 +167,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
           }
           if(n_equipas!=inf_fich->number_of_teams){
             printf("CANNOT START, NOT ENOUGH TEAMS\n");
-            writeLog("CANNOT START, NOT ENOUGH TEAMS",semaphore_list->writingMutex);
+            writeLog("CANNOT START, NOT ENOUGH TEAMS",semaphore_list->logMutex,inf_fich->fp);
           }
           else{
               //começar corrida
@@ -150,13 +192,13 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
         strcat(wrong_command_string,"WRONG COMMAND => ");
         strcat(wrong_command_string,received);
         printf("%s\n",wrong_command_string);
-        writeLog(wrong_command_string,semaphore_list->writingMutex);
+        writeLog(wrong_command_string,semaphore_list->logMutex,inf_fich->fp);
       }
       else{
         if(start == 1){ //Race already started
             printf("%s => ",received);
             printf("Rejected, race already started!\n");
-            writeLog("Rejected, race already started!",semaphore_list->writingMutex);
+            writeLog("Rejected, race already started!",semaphore_list->logMutex,inf_fich->fp);
         }
         else{ //ADD CAR
 
@@ -164,32 +206,43 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
           int teamCreated = writingNewCarInSharedMem(team_list, newCar, inf_fich, teamName, semaphore_list);
 
           if(teamCreated ==1){
+            int c=getFreeChannel(inf_fich->number_of_teams,channel);
+            if(c==-1){
+              printf("Não há channel para equipa\n"); //PARA TESTES, ISTO NUNCA VAI ACONTECER NA VERSAO FINAL PQ NAO HÁ EQUIPAS PRE CRIADAS
+              exit(0);
+            }
+            pipe(channel[c]);
+            //printf("Channel: %d %d\n",channel[c][0],channel[c][1]);
 
-            int channel[2];
+            pthread_create(&team_threads[c], NULL, teamThread,&c);
+            if((pids[i] =fork())==0){
 
-            pipe(channel);
 
-            if(fork()==0){
-
-              Team_Manager(inf_fich, team_list, semaphore_list,channel);
+              Team_Manager(inf_fich, team_list, semaphore_list,channel[c],index_team);
               #ifdef DEBUG
               printf("Team Manager %ld is out!\n", (long)getpid());
               #endif
+              pthread_join(team_threads[c],NULL);   //Quebrar a thread de alguma forma
               exit(0);
             }
-
-            //Le do pipe
-            int n;
-            read(channel[0],&n,sizeof(n));
-            printf("Race Manager leu %d.\n",n);
+            i++;
+            index_team++;
             }
           }
         }
     }
+
+
     }
 
  //the father process waits for all his children to die :(
  while ((wpid = wait(&status)) > 0);
+
+for(int i=0;i<inf_fich->number_of_teams;i++){
+  close(channel[i][0]);
+  close(channel[i][1]);
+}
+ free(channel);
  #ifdef DEBUG
  printf("Race Manager %ld is out!\n", (long)getpid());
  #endif

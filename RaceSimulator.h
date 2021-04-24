@@ -19,6 +19,7 @@ struct config_fich_struct{
   int T_Box_Min;
   int T_Box_Max;
   int fuel_capacity;
+  FILE *fp;
 };
 
 struct car{
