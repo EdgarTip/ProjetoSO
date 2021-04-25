@@ -72,13 +72,14 @@ int getPipesCreated(int n, int pipes[n]){
   return total;
 }
 
-void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP){
+void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP, struct ids *idsP){
 
   signal(SIGINT, SIG_IGN);
   signal(SIGTSTP, SIG_IGN);
   signal(SIGUSR1, interruptRace);
   signal(SIGUSR2, endRaceManager);
   //unlink(PIPE_NAME);
+
 
   #ifdef DEBUG
   printf("Race_Manager created with id: %ld\n",(long)getpid());
@@ -97,15 +98,15 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   pids = malloc(sizeof(int) * inf_fich->number_of_teams);
   //For testing purposes!
 
-  struct car car1 = {1,10,10,10,10,10,10,"WAITING"};
-  struct car car2 = {2,20,20,20,20,20,20,"WAITING"};
-  struct car car3 = {3,30,30,30,30,30,30,"RACING"};
-  struct car car4 = {4,40,40,40,40,40,40,"IN BOX"};
-  struct car car5 = {5,50,50,50,50,50,50,"RACING"};
-  struct car car6 = {6,60,60,60,60,60,60,"GAVE UP"};
-  struct car car7 = {7,70,70,70,70,70,70,"SAFETY MODE"};
-  struct car car8 = {8,80,80,80,80,80,80,"RACING"};
-  struct car car9 = {9,90,90,90,90,90,90,"ENDED"};
+  struct car car1 = {1,10,10,10,10,10,10,0,""};
+  struct car car2 = {2,20,20,20,20,20,20,0,""};
+  struct car car3 = {3,30,30,30,30,30,30,0,""};
+  struct car car4 = {4,40,40,40,40,40,40,0,""};
+  struct car car5 = {5,50,50,50,50,50,50,0,""};
+  struct car car6 = {6,60,60,60,60,60,60,0,""};
+  struct car car7 = {7,70,70,70,70,70,70,0,""};
+  struct car car8 = {8,80,80,80,80,80,80,0,""};
+  struct car car9 = {9,90,90,90,90,90,90,0,""};
 //  struct car car10 = {7,70,70,70,70,70,70,"SAFETY MODE"};
 //  struct car car11 = {8,80,80,80,80,80,80,"RACING"};
 //  struct car car12 = {9,90,90,90,90,90,90,"ENDED"};
@@ -181,6 +182,9 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                     for(int i = 0; i<inf_fich->number_of_teams; i++){
                       kill(pids[i], SIGTERM);
                     }
+
+                    kill(idsP->pid_breakdown, SIGTERM);
+
                     start = 1;
                 }
               }
@@ -213,7 +217,11 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
               }
               else{ //ADD CAR
 
-
+                newCar->number_of_laps = 0;
+                newCar->amount_breakdown = 0;
+                newCar->times_refill = 0;
+                newCar->has_breakdown = 0;
+                strcpy(newCar->current_state, "CORRIDA");
                 int teamCreated = writingNewCarInSharedMem(team_list, newCar, inf_fich, teamName, semaphore_list);
 
                 if(teamCreated ==1){

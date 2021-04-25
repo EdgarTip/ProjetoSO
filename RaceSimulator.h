@@ -23,10 +23,20 @@ struct config_fich_struct{
   FILE *fp;
 };
 
+struct ids{
+  pid_t pid_breakdown;
+  int msg_queue_id;
+};
+
 struct message{
   int team_index;
   int car_index;
   char message[MAX];
+};
+
+struct  messageQ{
+  int team_index;
+  int car_index;
 };
 
 struct car{
@@ -37,6 +47,7 @@ struct car{
   int number_of_laps;
   int amount_breakdown;
   int times_refill;
+  int has_breakdown;
   char current_state[SIZE];
 };
 
@@ -46,7 +57,7 @@ struct team{
   char team_name[SIZE];
   char box_state[SIZE];
   int number_of_cars;
-  int hasBreakdown;
+  int is_repairing;
   struct car *cars;
 };
 

@@ -66,7 +66,7 @@ int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct
 
       strcpy(team_list[i].team_name, team_name);
       strcpy(team_list[i].box_state, "OPEN");
-      team_list[i].hasBreakdown = 0;
+      team_list[i].is_repairing = 0;
       team_list[i].cars[0] = *new_car;
       team_list[i].number_of_cars = 1;
 
@@ -170,7 +170,7 @@ int amountRacing(struct config_fich_struct *inf_fich, struct team *team_list){
 
   for(int i = 0 ; i < inf_fich->number_of_teams; i++){
     for( int j = 0 ; j < team_list[i].number_of_cars; j++){
-      if(strcmp(team_list[i].cars[j].current_state, "RACING") == 0 || strcmp(team_list[i].cars[j].current_state, "SAFETY MODE") == 0 ){
+      if(strcmp(team_list[i].cars[j].current_state, "CORRIDA") == 0 || strcmp(team_list[i].cars[j].current_state, "SEGURANCA") == 0 ){
         total_racing++;
       }
     }

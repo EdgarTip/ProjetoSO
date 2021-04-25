@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/msg.h>
+
 
 #include "RaceSimulator.h"
 #include "MultipleProcessActions.h"
@@ -33,7 +35,7 @@ void raceStartBreakdown(int signum){
   start_breakdown = 1;
 }
 
-void createBreakdowns(){
+void createBreakdowns(struct ids *idsP){
 
 
 
@@ -47,8 +49,17 @@ void createBreakdowns(){
       int r = rand()%100;
 
       if(r >= team_list[i].cars[j].reliability){
-        //Notify the car via the message queue
+
         printf("A breakdown was created\n");
+        struct messageQ msg;
+        msg.team_index=i;
+        msg.car_index=j;
+        printf("[A] Sended (%d %d)\n", msg.team_index,msg.car_index);
+        msgsnd(idsP->msg_queue_id, &msg, sizeof(msg), 0);
+
+      }
+      else{
+        printf("BREAKDOWN FAILED (%d vs %d)\n",r,team_list[i].cars[j].reliability);
       }
 
     }
@@ -59,7 +70,7 @@ void createBreakdowns(){
 }
 
 
-void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP){
+void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, struct ids *idsP){
 
   signal(SIGINT, SIG_IGN);
   signal(SIGTSTP, SIG_IGN);
@@ -74,19 +85,15 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
   team_list = team_listP;
   semaphore_list = semaphore_listP;
 
-  while(start_breakdown != 1) {
 
-    #ifdef DEBUG
-    printf("[Proc %d] Waiting for a signal...\n",getpid());
-    #endif
-    pause();
-  }
+  pause();
+
+
 
 
   while(start_breakdown == 1) {
     sleep(inf_fich->T_Avaria);
-
-    createBreakdowns();
+    createBreakdowns(idsP);
 
 }
 
