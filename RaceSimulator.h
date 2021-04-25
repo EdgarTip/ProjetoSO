@@ -3,6 +3,7 @@
 #define SIZE 50
 #define DEBUG
 #define PIPE_NAME "pipe"
+#define MAX 200
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +23,12 @@ struct config_fich_struct{
   FILE *fp;
 };
 
+struct message{
+  int team_index;
+  int car_index;
+  char message[MAX];
+};
+
 struct car{
   int car_number;
   int speed;
@@ -39,7 +46,7 @@ struct team{
   char team_name[SIZE];
   char box_state[SIZE];
   int number_of_cars;
-  int number_readers;
+  int raceStarted;
   struct car *cars;
 };
 

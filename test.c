@@ -11,9 +11,10 @@
 #include <signal.h>
 
 
+
 pthread_t *cars;
 
-
+/*
 void carEnd(){
   printf("Car from team %ld killed.\n",(long)getpid());
   pthread_exit(NULL);
@@ -36,9 +37,22 @@ void *carThread(void* team_number){
   return NULL;
 
 }
+*/
+void *thread(void *cancro){
+  sleep(1);
+  kill(getpid(),SIGINT);
 
+
+  sleep(1);
+  printf("I continue in the same place :)\n");
+  pthread_exit(NULL);
+}
+
+void weee(int signum){
+  printf("I received it clear and loud\n");
+}
 int main(){
-  signal(SIGINT, teamEnd);
+/*  signal(SIGINT, teamEnd);
 
   int workerId[3];
 
@@ -55,4 +69,16 @@ int main(){
   }
 
   return 0;
+  */
+  signal(SIGINT, weee);
+  int workerId = 0;
+
+  pthread_t cars[1];
+
+  pthread_create(&cars[0], NULL, thread,&workerId);
+
+  pause();
+  for(int j=0; j<1; j++){
+    pthread_join(cars[j],NULL);
+  }
 }
