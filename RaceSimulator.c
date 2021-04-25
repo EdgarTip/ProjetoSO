@@ -18,6 +18,10 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <assert.h>
+#include <sys/msg.h>
+
+
 #include "RaceSimulator.h"
 #include "RaceManager.h"
 #include "ReadConfig.h"
@@ -40,6 +44,7 @@ struct team *team_list;
 
 struct semaphoreStruct *semaphore_list;
 
+struct ids *idsP;
 
 int shmid;
 int named_pipe_fd;
@@ -57,7 +62,7 @@ void leituraParaTeste(){
       if(team_list[i].cars[j].speed ==0){
         break;
       }
-      printf("Amount cars: %d\n Box State %s\n number_readers %d\n", team_list[i].number_of_cars, team_list[i].box_state, team_list[i].raceStarted );
+      printf("Amount cars: %d\n Box State %s\n number_readers %d\n", team_list[i].number_of_cars, team_list[i].box_state, team_list[i].is_repairing );
       /*printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %.2f\n Car reliability: %d\n Number laps: %d\n Amount Breakdown %d\n Amount reffil:%d\n Car state:%s", team_list[i].team_name
                                                                                                                        , team_list[i].box_state
                                                                                                                        , team_list[i].cars[j].car_number
@@ -97,6 +102,7 @@ void clean(){
   sem_unlink("WRITING_MUTEX");
   sem_unlink("READING_MUTEX");
   free(semaphore_list);
+  free(idsP);
   close(named_pipe_fd);
   unlink(PIPE_NAME);
 }
@@ -173,23 +179,33 @@ int main(int argc, char* argv[]){
   printf("SIMULATION STARTING\n");
   writeLog("SIMULATOR STARTING", semaphore_list->logMutex, inf_fich->fp);
 
+  idsP = (struct ids*) malloc(sizeof(struct ids));
 
+
+  assert( (idsP->msg_queue_id= msgget(IPC_PRIVATE, IPC_CREAT|0700)) != -1 );
+
+
+  if((pids[0] = fork()) == 0){
+    //Creates the break down manager
+    idsP->pid_breakdown = getpid();
+
+    BreakDownManager(inf_fich, team_list, semaphore_list, idsP);
+
+
+  }
+
+  idsP->pid_breakdown = pids[0];
 
   //Creates RaceManager and BreakDownManager
-  if( (pids[0] = fork()) == 0){
+  if( (pids[1] = fork()) == 0){
     //Creates the RaceManager
-    Race_Manager(inf_fich, team_list, semaphore_list);
+    Race_Manager(inf_fich, team_list, semaphore_list,  idsP);
 
   }
 
 
 
-  if((pids[1] = fork()) == 0){
-    //Creates the break down manager
-    BreakDownManager(inf_fich, team_list, semaphore_list);
 
-
-  }
 
   unlink(PIPE_NAME);
   printf("Creating named pipe.\n");

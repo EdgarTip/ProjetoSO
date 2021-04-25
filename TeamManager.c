@@ -51,9 +51,7 @@ void racing(int arrayNumber){
   //escrever para o gestor de equipas que o carro começou em corrida com o estado "CORRIDA"
   data.car_index = arrayNumber;
   data.team_index = team_index;
-  strcpy(data.message,"CORRIDA");
 
-  write(channel[1],&data, sizeof(data));
 
   while(1){
 
@@ -83,7 +81,7 @@ void racing(int arrayNumber){
     else{
       printf("ERRO NO CODIGO!!!! %s RECEBIDO!\n",team_list[team_index].cars[arrayNumber].current_state);
     }
-    
+
     printf("amount of fuel %.02f\n",current_fuel);
 
     //If the car does not have enough fuel for the next 4 laps. The car enters security mode
@@ -94,14 +92,48 @@ void racing(int arrayNumber){
 
     }
 
-    //The car ended the race!
-    if(team_list[team_index].cars[arrayNumber].number_of_laps >= inf_fich->number_of_laps){
-      printf("i'm out\n");
-      break;
+
+
+
+
+    //Passes a lap. Sees if the car has a breakdown or need a refill, if it does then it goes, else it continues the race
+    if(distance_in_lap >= inf_fich->lap_distance){
+      team_list[team_index].cars[arrayNumber].number_of_laps++;
+
+      //The car ended the race!
+      if(team_list[team_index].cars[arrayNumber].number_of_laps >= inf_fich->number_of_laps){
+        printf("i'm out\n");
+        break;
+      }
+
+      distance_in_lap = inf_fich->lap_distance/distance_in_lap;
+
+      if((strcmp(team_list[team_index].cars[arrayNumber].current_state, "SEGURANCA") == 0) && (team_list[team_index].is_repairing == 0)){
+
+        //ocuppy the box so that no other car can enter
+        team_list[team_index].is_repairing = 1;
+
+        if(team_list[team_index].cars[arrayNumber].has_breakdown){
+          //Sleep for a random amount of time
+          sleep((rand() % (inf_fich->T_Box_Min - inf_fich->T_Box_Max + 1)) + inf_fich->T_Box_Min);
+        }
+
+
+
+        //refill
+        current_fuel = team_list[team_index].cars[arrayNumber].consumption;
+        sleep(2);
+
+        strcpy(data.message, "CORRIDA");
+        write(channel[1], &data, sizeof(data));
+        team_list[team_index].is_repairing = 0;
+
+      }
     }
-
-
-    sleep(1/inf_fich->time_units_per_second);
+    //Normal time
+    else{
+      sleep(1/inf_fich->time_units_per_second);
+    }
   }
 
 }
