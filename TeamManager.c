@@ -24,8 +24,12 @@ int team_index;
 
 int *channel;
 
+int start_teams = 0;
+int number_of_cars;
+
+//Ends the team
 void teamEnd(int signum){
-  for(int j=0; j<inf_fich->number_of_cars; j++){
+  for(int j=0; j<number_of_cars; j++){
     pthread_cancel(cars[j]);
   }
   printf("Team %ld killed\n",(long)getpid());
@@ -48,13 +52,13 @@ void racing(int arrayNumber){
   data.car_index = arrayNumber;
   data.team_index = team_index;
   strcpy(data.message,"CORRIDA");
+
   write(channel[1],&data, sizeof(data));
 
   while(1){
-    strcpy(data.message,"YO");
-    write(channel[1],&data, sizeof(data));
-    
+
     printf("Current index of car in array: %d\n",arrayNumber);
+
     //Racing normally
     if (strcmp(team_list[team_index].cars[arrayNumber].current_state,"CORRIDA") == 0) {
       current_fuel -= team_list[team_index].cars[arrayNumber].consumption;
@@ -79,16 +83,14 @@ void racing(int arrayNumber){
     else{
       printf("ERRO NO CODIGO!!!! %s RECEBIDO!\n",team_list[team_index].cars[arrayNumber].current_state);
     }
-    printf("amount of fuel %.02f\n",4 * ((inf_fich->lap_distance / team_list[team_index].cars[arrayNumber].speed)*team_list[team_index].cars[arrayNumber].consumption));
-    //team_list[team_index].cars[arrayNumber].
+    
+    printf("amount of fuel %.02f\n",current_fuel);
 
+    //If the car does not have enough fuel for the next 4 laps. The car enters security mode
     if(current_fuel < 4 * ((inf_fich->lap_distance / team_list[team_index].cars[arrayNumber].speed)*team_list[team_index].cars[arrayNumber].consumption)){
-      strcpy(update, "SEGURANCA");
-      printf("out of fuel soon\n");
-      data.team_index = team_index;
-      data.car_index = arrayNumber;
-      strcpy(data.message, update);
-      //write(channel[1], &data, sizeof(data));
+
+      strcpy(data.message,"SEGURANCA");
+      write(channel[1],&data, sizeof(data));
 
     }
 
@@ -126,12 +128,20 @@ void *carThread(void* team_number){
 
 }
 
+//Signals the race manager that the race has started
+void raceStart(int signum){
+  start_teams = 1;
+}
 
+void teste(int signum){
+  printf("wqe fuuiowqe we gioq ioeg uio io\n");
+}
 //Team manager. Will create the car threads
 void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, int channelP[2],int team_indexP){
   signal(SIGUSR2, teamEnd);
   signal(SIGUSR1, SIG_IGN);
-
+  signal(SIGTSTP, teste);
+  signal(SIGTERM, raceStart);
 
 
 
@@ -146,17 +156,28 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   semaphore_list = semaphore_listP;
   team_index = team_indexP;
 
-  int workerId[inf_fich->number_of_cars];
+  //waits for race to start
+  while(start_teams == 0){
+    pause();
+  }
 
-  cars = malloc(sizeof(pthread_t) * inf_fich->number_of_cars);
+
+  signal(SIGTERM, SIG_IGN);
+
+  number_of_cars = team_list[team_index].number_of_cars;
+
+  int workerId[number_of_cars];
+
+  cars = malloc(sizeof(pthread_t) * number_of_cars);
+
 
   //Create the car threads
-  for(int i=0; i<inf_fich->number_of_cars;i++){
+  for(int i=0; i<number_of_cars;i++){
     workerId[i] = i;
     pthread_create(&cars[i], NULL, carThread,&workerId[i]);
   }
   //Waits for all the cars to die
-  for(int j=0; j<inf_fich->number_of_cars; j++){
+  for(int j=0; j<number_of_cars; j++){
     pthread_join(cars[j],NULL);
   }
 

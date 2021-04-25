@@ -17,7 +17,7 @@ struct config_fich_struct *inf_fich;
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 
-int start = 0;
+int start_breakdown = 0;
 
 void endBreakDown(int signum){
   free(semaphore_list);
@@ -29,22 +29,16 @@ void endBreakDown(int signum){
 
 }
 
-void raceStart(int signum){
-  start = 1;
+void raceStartBreakdown(int signum){
+  start_breakdown = 1;
 }
 
 void createBreakdowns(){
 
 
-  sem_wait(semaphore_list->readingMutex);
 
-  ++team_list[0].number_readers;
+  sem_wait(semaphore_list->writingMutex);
 
-  if(team_list[0].number_readers == 1){
-    sem_wait(semaphore_list->writingMutex);
-  }
-
-  sem_post(semaphore_list->readingMutex);
 
   srand((unsigned) time(NULL));
   for(int i= 0; i < inf_fich->number_of_teams; i++){
@@ -60,14 +54,8 @@ void createBreakdowns(){
     }
   }
 
-  sem_wait(semaphore_list->readingMutex);
-  --team_list[0].number_readers;
+  sem_post(semaphore_list->writingMutex);
 
-  if(team_list[0].number_readers == 0){
-    sem_post(semaphore_list->writingMutex);
-  }
-
-  sem_post(semaphore_list->readingMutex);
 }
 
 
@@ -77,7 +65,7 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
   signal(SIGTSTP, SIG_IGN);
 
   signal(SIGUSR2,endBreakDown);
-
+  signal(SIGTERM,raceStartBreakdown);
   #ifdef DEBUG
   printf("Breakdown Manager created with id: %ld\n",(long)getpid());
   #endif
@@ -86,7 +74,7 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
   team_list = team_listP;
   semaphore_list = semaphore_listP;
 
-  while(start != 1) {
+  while(start_breakdown != 1) {
 
     #ifdef DEBUG
     printf("[Proc %d] Waiting for a signal...\n",getpid());
@@ -95,7 +83,7 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
   }
 
 
-  while(start == 1) {
+  while(start_breakdown == 1) {
     sleep(inf_fich->T_Avaria);
 
     createBreakdowns();
