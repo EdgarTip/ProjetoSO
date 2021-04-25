@@ -64,7 +64,7 @@ int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct
 
       strcpy(team_list[i].team_name, team_name);
       strcpy(team_list[i].box_state, "OPEN");
-      team_list[i].number_readers = 0;
+      team_list[i].raceStarted = 0;
       team_list[i].cars[0] = *new_car;
       team_list[i].number_of_cars = 1;
 
@@ -176,23 +176,15 @@ int amountRacing(struct config_fich_struct *inf_fich, struct team *team_list){
 
   return total_racing;
 }
-void updateState(struct team *team_list, struct config_fich_struct *inf_fich,  struct semaphoreStruct *semaphore_list){
-
-
+void updateState(struct team *team_list, struct config_fich_struct *inf_fich,  struct semaphoreStruct *semaphore_list,struct message data){
+  strcpy(team_list[data.team_index].cars[data.car_index].current_state,data.message);
 }
+
 //Prints the statistics of a race (could be midway or at the end). This has priority over writing actions
 void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list, struct semaphoreStruct *semaphore_list){
 
-
-  sem_wait(semaphore_list->readingMutex);
-
-  ++team_list[0].number_readers;
-
-  if(team_list[0].number_readers == 1){
-    sem_wait(semaphore_list->writingMutex);
-  }
-
-  sem_post(semaphore_list->readingMutex);
+  
+  sem_wait(semaphore_list->writingMutex);
 
   //First line for team index second line for car index
   int top5Teams[5][2] = {{-1,-1},{-1,-1},{-1,-1},{-1,-1},{-1,-1}};
@@ -221,17 +213,8 @@ void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list,
   printf("Quantidade de reabastecimentos: %d\n", total_reffils);
   printf("Quantidade de carros na pista: %d\n", total_racing);
 
-  sem_wait(semaphore_list->readingMutex);
+  sem_post(semaphore_list->writingMutex);
 
-
-
-  --team_list[0].number_readers;
-
-  if(team_list[0].number_readers == 0){
-    sem_post(semaphore_list->writingMutex);
-  }
-
-  sem_post(semaphore_list->readingMutex);
 
 
 }
