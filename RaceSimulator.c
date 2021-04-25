@@ -48,7 +48,7 @@ pid_t pids[2];
 
 //Only for debug purposes will be deleted/changed later
 void leituraParaTeste(){
-  printf("enteren\n");
+
   for(int i = 0; i< inf_fich->number_of_teams; i++){
     if(strcmp(team_list[i].team_name, "") == 0){
       return;
@@ -57,7 +57,7 @@ void leituraParaTeste(){
       if(team_list[i].cars[j].speed ==0){
         break;
       }
-      printf("Amount cars: %d\n Box State %s\n number_readers %d\n", team_list[i].number_of_cars, team_list[i].box_state, team_list[i].number_readers );
+      printf("Amount cars: %d\n Box State %s\n number_readers %d\n", team_list[i].number_of_cars, team_list[i].box_state, team_list[i].raceStarted );
       /*printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %.2f\n Car reliability: %d\n Number laps: %d\n Amount Breakdown %d\n Amount reffil:%d\n Car state:%s", team_list[i].team_name
                                                                                                                        , team_list[i].box_state
                                                                                                                        , team_list[i].cars[j].car_number

@@ -111,7 +111,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 //  struct car car12 = {9,90,90,90,90,90,90,"ENDED"};
 
 
-  writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list);
+  /*writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list);
   writingNewCarInSharedMem(team_list, &car2, inf_fich, "Sporting", semaphore_list);
   writingNewCarInSharedMem(team_list, &car3, inf_fich, "Sporting", semaphore_list);
   writingNewCarInSharedMem(team_list, &car4, inf_fich, "Porto", semaphore_list);
@@ -119,7 +119,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   writingNewCarInSharedMem(team_list, &car6, inf_fich, "Porto", semaphore_list);
   writingNewCarInSharedMem(team_list, &car7, inf_fich, "Benfica", semaphore_list);
   writingNewCarInSharedMem(team_list, &car8, inf_fich, "Benfica", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car9, inf_fich, "Benfica", semaphore_list);
+  writingNewCarInSharedMem(team_list, &car9, inf_fich, "Benfica", semaphore_list);*/
 //  writingNewCarInSharedMem(team_list, &car10, inf_fich, "Sporting", semaphore_list);
 //  writingNewCarInSharedMem(team_list, &car11, inf_fich, "Boavista", semaphore_list);
 //  writingNewCarInSharedMem(team_list, &car12, inf_fich, "Boavista", semaphore_list);
@@ -177,7 +177,11 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                   writeLog("CANNOT START, NOT ENOUGH TEAMS",semaphore_list->logMutex,inf_fich->fp);
                 }
                 else{
-                    //começar corrida
+                  //Notificar os TeamManagers do inicio da corrida
+                    for(int i = 0; i<inf_fich->number_of_teams; i++){
+                      kill(pids[i], SIGTERM);
+                    }
+                    start = 1;
                 }
               }
               else if(start == 1){
@@ -213,6 +217,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                 int teamCreated = writingNewCarInSharedMem(team_list, newCar, inf_fich, teamName, semaphore_list);
 
                 if(teamCreated ==1){
+                  printf("Entrei aqui para criar uma nova equipa :)\n");
                   int c=getFreeChannel(inf_fich->number_of_teams+1,pipes);
                   if(c==-1){
                     printf("Não há channel para equipa\n"); //PARA TESTES, ISTO NUNCA VAI ACONTECER NA VERSAO FINAL PQ NAO HÁ EQUIPAS PRE CRIADAS
@@ -251,6 +256,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
               read(pipes[channel],&data,sizeof(struct message));
               printf("[RaceManager (%d)] Received %d, %d ,%s.\n",channel,data.car_index, data.team_index,data.message);
+              updateState( team_list, semaphore_list, data );
             }
           }
         //}

@@ -46,7 +46,7 @@ struct team{
   char team_name[SIZE];
   char box_state[SIZE];
   int number_of_cars;
-  int raceStarted;
+  int hasBreakdown;
   struct car *cars;
 };
 

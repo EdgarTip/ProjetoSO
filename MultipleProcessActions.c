@@ -45,13 +45,15 @@ int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct
 
         //Sees if there is space for the car
         if(team_list[i].cars[j].speed == 0){
-          team_list[i].number_of_cars +=1;
+
+          team_list[i].number_of_cars++;
+
           team_list[i].cars[j] = *new_car;
 
           sem_post(semaphore_list->writingMutex);
           sprintf(carLog,"NEW CAR LOADED => TEAM: %s, CAR: %d, SPEED: %d, CONSUMPTION: %.2f, RELIABILITY: %d",team_name,new_car->car_number, new_car->speed,new_car->consumption,new_car->reliability);
           writeLog(carLog,semaphore_list->logMutex, inf_fich->fp);
-          return 1;
+          return 0;
         }
       }
       printf("WARNING! THERE WAS NO SPACE IN THE SELECTED TEAM. THE CAR WILL NOT BE CREATED!\n");
@@ -64,7 +66,7 @@ int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct
 
       strcpy(team_list[i].team_name, team_name);
       strcpy(team_list[i].box_state, "OPEN");
-      team_list[i].raceStarted = 0;
+      team_list[i].hasBreakdown = 0;
       team_list[i].cars[0] = *new_car;
       team_list[i].number_of_cars = 1;
 
@@ -176,14 +178,14 @@ int amountRacing(struct config_fich_struct *inf_fich, struct team *team_list){
 
   return total_racing;
 }
-void updateState(struct team *team_list, struct config_fich_struct *inf_fich,  struct semaphoreStruct *semaphore_list,struct message data){
+void updateState(struct team *team_list, struct semaphoreStruct *semaphore_list,struct message data){
   strcpy(team_list[data.team_index].cars[data.car_index].current_state,data.message);
 }
 
 //Prints the statistics of a race (could be midway or at the end). This has priority over writing actions
 void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list, struct semaphoreStruct *semaphore_list){
 
-  
+
   sem_wait(semaphore_list->writingMutex);
 
   //First line for team index second line for car index
