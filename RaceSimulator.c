@@ -62,7 +62,7 @@ void leituraParaTeste(){
       if(team_list[i].cars[j].speed ==0){
         break;
       }
-      printf("Amount cars: %d\n Box State %s\n number_readers %d\n", team_list[i].number_of_cars, team_list[i].box_state, team_list[i].is_repairing );
+      printf("Amount cars: %d\n Box State %s\n", team_list[i].number_of_cars, team_list[i].box_state );
       /*printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %.2f\n Car reliability: %d\n Number laps: %d\n Amount Breakdown %d\n Amount reffil:%d\n Car state:%s", team_list[i].team_name
                                                                                                                        , team_list[i].box_state
                                                                                                                        , team_list[i].cars[j].car_number

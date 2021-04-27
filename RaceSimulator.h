@@ -39,6 +39,8 @@ struct  messageQ{
   int car_index;
 };
 
+// has_breakdown : 0 == no breakdown , 1 == breakdown
+// current_state : CORRIDA, SEGURANCA, DESISTENCIA, BOX, TERMINADO
 struct car{
   int car_number;
   int speed;
@@ -55,9 +57,9 @@ struct car{
 
 struct team{
   char team_name[SIZE];
+  //LIVRE, OCUPADO, RESERVADO
   char box_state[SIZE];
   int number_of_cars;
-  int is_repairing;
   struct car *cars;
 };
 

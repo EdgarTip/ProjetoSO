@@ -65,8 +65,7 @@ int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct
     else if(strcmp(team_list[i].team_name,"") == 0){
 
       strcpy(team_list[i].team_name, team_name);
-      strcpy(team_list[i].box_state, "OPEN");
-      team_list[i].is_repairing = 0;
+      strcpy(team_list[i].box_state, "LIVRE");
       team_list[i].cars[0] = *new_car;
       team_list[i].number_of_cars = 1;
 
