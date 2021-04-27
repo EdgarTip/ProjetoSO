@@ -265,7 +265,11 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
               read(pipes[channel],&data,sizeof(struct message));
               printf("[RaceManager (%d)] Received %d, %d ,%s.\n",channel,data.car_index, data.team_index,data.message);
-              updateState( team_list, semaphore_list, data );
+
+              updateState(team_list, semaphore_list, data);
+              if(strcmp(data.message,"TERMINADO") == 0){
+                //SIGNAL to end
+              }
             }
           }
         //}

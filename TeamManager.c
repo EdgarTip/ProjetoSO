@@ -24,6 +24,10 @@ struct semaphoreStruct *semaphore_list;
 pthread_t *cars;
 pthread_mutex_t mutex_cond = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t 	variavel_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex_interruption = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t 	interruption_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t  mutex_stop = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t 	stop_cond= PTHREAD_COND_INITIALIZER;
 
 sem_t *car_in_box;
 sem_t *reservation;
@@ -38,14 +42,29 @@ int *channel;
 int start_teams = 0;
 int number_of_cars;
 int is_reserved = 0;
+int terminating = 0;
+int interrupting = 0;
+int all_exited = 1;
+int amount_terminated = 0;
 
 
 
 //Ends the team
 void teamEnd(int signum){
-  for(int j=0; j<number_of_cars; j++){
-    pthread_cancel(cars[j]);
+  terminating = 1;
+
+  int number_cars = team_list[team_index].number_of_cars;
+
+  while(amount_terminated != number_cars){
+    sleep(1/inf_fich->time_units_per_second);
   }
+
+  pthread_cond_broadcast(&stop_cond);
+
+  for(int j=0; j<number_of_cars; j++){
+    pthread_join(cars[j], NULL);
+  }
+
   printf("Team %ld killed\n",(long)getpid());
   free(cars);
   sem_close(car_in_box);
@@ -56,6 +75,15 @@ void teamEnd(int signum){
   printf("morreu\n");
   exit(0);
 }
+
+
+
+void waitForEnd(){
+  pthread_cond_wait(&stop_cond,&mutex_stop);
+  pthread_mutex_unlock(&mutex_stop);
+  pthread_exit(NULL);
+}
+
 
 //Cars are racing
 void racing(int arrayNumber){
@@ -90,18 +118,18 @@ void racing(int arrayNumber){
       distance_in_lap += 0.3 * team_list[team_index].cars[arrayNumber].speed;
     }
 
-    //Gave up
-    else if(strcmp(team_list[team_index].cars[arrayNumber].current_state,"DESISTENCIA") == 0){
-      sprintf(logMessage, "Car %d from team %s gave up", team_list[team_index].cars[arrayNumber].car_number, team_list[team_index].team_name);
-      writeLog(logMessage,semaphore_list->logMutex, inf_fich->fp);
-      pthread_exit(NULL);
-    }
+    //The car has no more fuel. This means that the car is giving up on the race
+    if(current_fuel <= 0){
 
-    //para debugging apagar mais tarde!!!!!!!!!!!!!!!!!!!!!!!!
-    else{
-      printf("ERRO NO CODIGO!!!! %s RECEBIDO!\n",team_list[team_index].cars[arrayNumber].current_state);
-    }
+      //TO-DO add a semaphore
 
+      strcpy(data.message,"DESISTENCIA");
+      write(channel[1], &data, sizeof(data));
+
+      amount_terminated++;
+      break;
+
+    }
     printf("Team %s car amount of fuel %.02f\n",team_list[team_index].team_name, current_fuel);
 
     //If the car does not have enough fuel for the next 4 laps. The car enters security mode
@@ -116,6 +144,7 @@ void racing(int arrayNumber){
       }
 
       sem_wait(update_waiting);
+
       if(strcmp(team_list[team_index].box_state, "LIVRE") == 0){
         is_reserved = 1;
         printf("Fiz uma reserva :) \n");
@@ -128,71 +157,134 @@ void racing(int arrayNumber){
 
     }
 
-
-
-    printf("Current distance in lap, team name (%.2f, %s)",distance_in_lap, team_list[team_index].team_name);
+    printf("Current distance in lap, team name (%.2f, %s)\n",distance_in_lap, team_list[team_index].team_name);
 
     //Passes a lap. Sees if the car has a breakdown or need a refill, if it does then it goes, else it continues the race
-    if(distance_in_lap >= inf_fich->lap_distance){
-
-      team_list[team_index].cars[arrayNumber].number_of_laps++;
-      printf("Number of laps, name car (%d, %s)\n", team_list[team_index].cars[arrayNumber].number_of_laps, team_list[team_index].team_name);
-      //The car ended the race!
-      if(team_list[team_index].cars[arrayNumber].number_of_laps >= inf_fich->number_of_laps){
-        printf("i'm out\n");
+    if(distance_in_lap >= inf_fich->lap_distance || terminating == 1 || interrupting == 1){
+      printf("ENTROU AGORA MORRE GORDO\n");
+      //race forced to terminate!
+      if(terminating == 1){
+        amount_terminated++;
+        printf("I am going away ;(\n");
         break;
       }
 
-      distance_in_lap = distance_in_lap - inf_fich->lap_distance;
+      //the race has been interrupted. Race will start again if a RACE START is detected via the named pipe
+      else if(interrupting == 1){
+        //This temp needs to exist in case that the a SIGINT is casted after a SIGUSR1 without a START RACE in the middle (the program would end in a deadlock)
+        amount_terminated++;
 
-      sem_wait(update_waiting);
-      //Put distance in lap to 0 
-      if((strcmp(team_list[team_index].cars[arrayNumber].current_state, "SEGURANCA") == 0) && (strcmp(team_list[team_index].box_state, "RESERVADO") == 0)){
+        printf("I am being interrupted\n");
+        printf("I am going to sleep until the race restarts\n");
 
-        car_index = arrayNumber;
+        pthread_cond_wait(&interruption_cond, &mutex_interruption);
 
-        //Notify team manager that a car has entered the box
-        sem_post(car_in_box);
+        pthread_mutex_unlock(&mutex_interruption);
 
-        //Waits for the everything to get sorted in the car
-        pthread_cond_wait(&variavel_cond, &mutex_cond);
-
-        current_fuel = team_list[team_index].cars[car_index].consumption;
-
-        //Add a semaphore here
-        strcpy(data.message, "CORRIDA");
-        write(channel[1], &data, sizeof(data));
-
+        if(terminating == 1){
+          printf("I am going away 2 ;( \n");
+          break;
+        }
+        amount_terminated--;
 
       }
-      else if(current_fuel < 4 * ((inf_fich->lap_distance / team_list[team_index].cars[arrayNumber].speed)*team_list[team_index].cars[arrayNumber].consumption) && strcmp(team_list[team_index].box_state, "LIVRE") == 0){
-        //car reserves and immediatly goes into box
-        is_reserved = 0;
 
-        sem_post(reservation);
-
-        car_index = arrayNumber;
-
-        sem_post(car_in_box);
-
-
-
-      }
-          //Normal time
+      //If the race has no interruptions
       else{
-        sem_post(update_waiting);
-        sleep(1/inf_fich->time_units_per_second);
-      }
+        team_list[team_index].cars[arrayNumber].number_of_laps++;
+
+        printf("Number of laps, name car (%d, %s)\n", team_list[team_index].cars[arrayNumber].number_of_laps, team_list[team_index].team_name);
+        //The car ended the race!
+        if(team_list[team_index].cars[arrayNumber].number_of_laps >= inf_fich->number_of_laps){
+
+          //TO-DO Add a semaphore here
+          strcpy(data.message, "CORRIDA");
+          write(channel[1], &data, sizeof(data));
+
+          printf("I finished the race!\n");
+          break;
+        }
+
+        distance_in_lap = distance_in_lap - inf_fich->lap_distance;
+
+        sem_wait(update_waiting);
+        //Put distance in lap to 0
+        if((strcmp(team_list[team_index].cars[arrayNumber].current_state, "SEGURANCA") == 0) && (strcmp(team_list[team_index].box_state, "RESERVADO") == 0)){
+
+          car_index = arrayNumber;
+
+          //Notify team manager that a car has entered the box
+          sem_post(car_in_box);
+
+          //TO-DO add semaphore
+          strcpy(data.message, "BOX");
+          write(channel[1], &data, sizeof(data));
+          //Waits for the everything to get sorted in the car
+          pthread_cond_wait(&variavel_cond, &mutex_cond);
+
+          current_fuel = team_list[team_index].cars[car_index].consumption;
+
+          //if the race has terminated while he was in the box
+          if(terminating == 1){
+            amount_terminated++;
+            printf("I am going away ;(\n");
+            break;
+          }
+
+          else if(interrupting == 1){
+            amount_terminated++;
+
+            printf("I am being interrupted\n");
+            printf("I am going to sleep until the race restarts\n");
+
+            pthread_cond_wait(&interruption_cond, &mutex_interruption);
+
+            pthread_mutex_unlock(&mutex_interruption);
+
+            if(terminating == 1){
+              printf("yeet\n");
+              break;
+            }
+            amount_terminated--;
+
+          }
+
+          distance_in_lap = 0;
+          //TO-DO Add a semaphore here
+          strcpy(data.message, "CORRIDA");
+          write(channel[1], &data, sizeof(data));
 
 
+        }
+        else if(current_fuel < 4 * ((inf_fich->lap_distance / team_list[team_index].cars[arrayNumber].speed)*team_list[team_index].cars[arrayNumber].consumption) && strcmp(team_list[team_index].box_state, "LIVRE") == 0){
+          //car reserves and immediatly goes into box
+          //TO-DO add semaphore
+          is_reserved = 0;
 
-  }
+          sem_post(reservation);
+
+          car_index = arrayNumber;
+
+          sem_post(car_in_box);
+          distance_in_lap = 0;
+
+
+        }
+          //Normal time
+          else{
+            sem_post(update_waiting);
+            sleep(1/inf_fich->time_units_per_second);
+          }
+        }
+    }
       //Normal time
     else{
       sleep(1/inf_fich->time_units_per_second);
     }
 
-}
+  }
+
+  waitForEnd();
 }
 
 
@@ -225,10 +317,16 @@ void raceStart(int signum){
 void teste(int signum){
   printf("wqe fuuiowqe we gioq ioeg uio io\n");
 }
+
+void interruptRaceTeam(){
+  interrupting = 1;
+}
+
+
 //Team manager. Will create the car threads
 void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, int channelP[2],int team_indexP){
   signal(SIGUSR2, teamEnd);
-  signal(SIGUSR1, SIG_IGN);
+  signal(SIGUSR1, interruptRaceTeam);
   signal(SIGTSTP, teste);
   signal(SIGTERM, raceStart);
 

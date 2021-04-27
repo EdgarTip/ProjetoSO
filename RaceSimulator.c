@@ -226,12 +226,25 @@ int main(int argc, char* argv[]){
   printf("Named pipe open.\n");
 
   // Do some work
-  char toSend[512];  //="ADDCAR TEAM: A, CAR: 20, SPEED: 30, CONSUMPTION: 0.04, RELIABILITY: 95";
+  char readed[500];  //="ADDCAR TEAM: A, CAR: 20, SPEED: 30, CONSUMPTION: 0.04, RELIABILITY: 95";
+  char toSend[512];
+  char c;
   while(1){
-    scanf("%[^\n]%*c", toSend);
-    printf("[RaceSimulator] Sending (%s)\n",toSend);
-    write(named_pipe_fd, toSend, sizeof(toSend));
-  }
+      fflush(stdin);
+
+      memset(readed, '\0', sizeof(readed));
+      memset(toSend, '\0', sizeof(toSend));
+
+      if((c=getchar())!='\n'){
+        toSend[0]=c;
+        scanf("%[^\n]%*c", readed);
+        strcat(toSend,readed);
+
+        printf("[RaceSimulator] Sending (%s)\n",toSend);
+
+        write(named_pipe_fd, toSend, sizeof(toSend));
+      }
+    }
 
   //The main process waits for its child (BreakDownManager) to die
   pid_t wpid;

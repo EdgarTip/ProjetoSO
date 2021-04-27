@@ -18,6 +18,10 @@
 
 int i = 0;
 
+pthread_mutex_t mutex_cond = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t 	variavel_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex_interruption = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t 	interruption_cond = PTHREAD_COND_INITIALIZER;
 
 pthread_t *cars;
 /*pthread_mutex_t mutex_cond = PTHREAD_MUTEX_INITIALIZER;
@@ -66,8 +70,7 @@ void weee(int signum){
 }*/
 
 void *thread(void *yeet){
-  i++;
-    printf("Car from team %ld killed.\n",(long)getpid());
+  printf("brah");
   pthread_exit(NULL);
 }
 
@@ -122,23 +125,22 @@ int main(){
   }
   */
 
-  int workerId[3];
+  int workerId[5];
 
-  pthread_t cars[3];
+  pthread_t cars[5];
   printf("wer\n");
     //Create the car threads
-  for(int i=0; i<3;i++){
+  for(int i=0; i<5;i++){
     workerId[i] = i+1;
     pthread_create(&cars[i], NULL, thread,&workerId[i]);
   }
-  printf("wer\n");
-  for(int j=0; j<3; j++){
-      printf("wer\n");
+
+  sleep(1);
+
+  for(int j=0; j<5; j++){
+    printf("yup\n");
     pthread_join(cars[j],NULL);
   }
-  printf("wer\n");
-  printf("%d\n",i);
-
 
 
 
