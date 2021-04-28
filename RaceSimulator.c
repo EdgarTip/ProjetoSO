@@ -109,12 +109,13 @@ void clean(){
 
 void sigint(int signum){
 
+  printf("SIGNAL SIGINT RECEIVED\n");
+  writeLog("SIGNAL SIGINT RECEIVED", semaphore_list->logMutex, inf_fich->fp);
   signal(SIGINT, SIG_IGN);
 
   kill(pids[0],SIGUSR2);
   kill(pids[1],SIGUSR2);
 
-  printf("RACE IS ENDING!\n");
   pid_t wpid;
   int status = 0;
   while ((wpid = wait(&status)) > 0);
@@ -125,18 +126,32 @@ void sigint(int signum){
 }
 
 void sigtstp(int signum){
+
   signal(SIGTSTP, SIG_IGN);
   readStatistics(inf_fich, team_list, semaphore_list);
   signal(SIGTSTP, sigtstp);
+
 }
 
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(int argc, char* argv[]){
 
+  sigset_t mask, new_mask;
+
+  //Ignore all unwanted signals!
+  sigfillset(&mask);
+  sigprocmask(SIG_SETMASK, &mask, NULL);
+
+  //Create the wanted signals
+  sigemptyset(&new_mask);
+  sigaddset(&new_mask,SIGINT);
+	sigaddset(&new_mask,SIGTSTP);
+
+  sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
   signal(SIGINT, sigint);
   signal(SIGTSTP, sigtstp);
-  signal(SIGUSR1, SIG_IGN);
-  signal(SIGUSR2, SIG_IGN);
+
+
 
 
 
@@ -176,7 +191,7 @@ int main(int argc, char* argv[]){
   for(int i = 0; i <= inf_fich->number_of_teams ; i++){
       team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams +1   + i * (inf_fich->number_of_cars));
   }
-  printf("SIMULATION STARTING\n");
+  printf("SIMULATOR STARTING\n");
   writeLog("SIMULATOR STARTING", semaphore_list->logMutex, inf_fich->fp);
 
   idsP = (struct ids*) malloc(sizeof(struct ids));
@@ -208,22 +223,30 @@ int main(int argc, char* argv[]){
 
 
   unlink(PIPE_NAME);
-  printf("Creating named pipe.\n");
+    #ifdef DEBUG
+    printf("Creating named pipe.\n");
+    #endif
     if ((mkfifo(PIPE_NAME, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST)) {
       perror("Cannot create pipe: ");
       exit(0);
-  }
-  printf("Named pipe created.\n");
+    }
+    #ifdef DEBUG
+      printf("Named pipe created.\n");
+    #endif
 
 
 
 
-  printf("Opening named pipe.\n");
-  if ((named_pipe_fd = open(PIPE_NAME, O_WRONLY)) < 0) {
-    perror("Cannot open pipe for writing: ");
-    exit(0);
-  }
-  printf("Named pipe open.\n");
+    #ifdef DEBUG
+    printf("Opening named pipe.\n");
+    #endif
+    if ((named_pipe_fd = open(PIPE_NAME, O_WRONLY)) < 0) {
+      perror("Cannot open pipe for writing: ");
+      exit(0);
+    }
+    #ifdef DEBUG
+      printf("Named pipe open.\n");
+    #endif
 
   // Do some work
   char readed[500];  //="ADDCAR TEAM: A, CAR: 20, SPEED: 30, CONSUMPTION: 0.04, RELIABILITY: 95";
@@ -240,7 +263,9 @@ int main(int argc, char* argv[]){
         scanf("%[^\n]%*c", readed);
         strcat(toSend,readed);
 
-        printf("[RaceSimulator] Sending (%s)\n",toSend);
+        #ifdef DEBUG
+          printf("[RaceSimulator] (NP) Sending: %s\n",toSend);
+        #endif
 
         write(named_pipe_fd, toSend, sizeof(toSend));
       }
@@ -249,6 +274,7 @@ int main(int argc, char* argv[]){
   //The main process waits for its child (BreakDownManager) to die
   pid_t wpid;
   int status = 0;
+
   while ((wpid = wait(&status)) > 0);
 
   #ifdef DEBUG
@@ -259,9 +285,10 @@ int main(int argc, char* argv[]){
   leituraParaTeste();
   #endif
 
-  printf("SIMULATION CLOSING\n");
+  printf("SIMULATOR CLOSING\n");
   writeLog("SIMULATOR CLOSING", semaphore_list->logMutex,  inf_fich->fp);
   clean();
+
   return 0;
 
 }

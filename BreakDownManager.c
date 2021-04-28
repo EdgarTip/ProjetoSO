@@ -25,7 +25,7 @@ void endBreakDown(int signum){
   free(semaphore_list);
   free(inf_fich);
   #ifdef DEBUG
-  printf("Break down manager killed!\n");
+    printf("Break Down Manager is out!\n");
   #endif
   exit(0);
 
@@ -48,18 +48,27 @@ void createBreakdowns(struct ids *idsP){
 
       int r = rand()%100;
 
-      if(r >= team_list[i].cars[j].reliability){
+      if(r >= team_list[i].cars[j].reliability && team_list[i].cars[j].has_breakdown != 1){
 
-        printf("A breakdown was created\n");
+        char problem_string[200]="";
+        char car_number[3]="";
+
+        strcpy(problem_string,"NEW PROBLEM IN CAR ");
+        sprintf(car_number,"%2d",team_list[i].cars[j].car_number);
+        strcat(problem_string,car_number);
+
+        printf("NEW PROBLEM IN CAR %2d\n",team_list[i].cars[j].car_number);
+        writeLog(problem_string,semaphore_list->logMutex,inf_fich->fp);
         struct messageQ msg;
 
         msg.mtype=i*inf_fich->number_of_cars+j+1;
         msg.response = 1;
-        printf("[A] Sended (%d)\n", msg.response);
+
+        #ifdef DEBUG
+          printf("Breakdown Sent(%s)\n", team_list[i].team_name);
+        #endif
+
         msgsnd(idsP->msg_queue_id, &msg, sizeof(msg)-sizeof(long), 0);
-      }
-      else{
-        printf("BREAKDOWN FAILED (%d vs %d)\n",r,team_list[i].cars[j].reliability);
       }
 
     }
@@ -72,13 +81,24 @@ void createBreakdowns(struct ids *idsP){
 
 void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, struct ids *idsP){
 
-  signal(SIGINT, SIG_IGN);
-  signal(SIGTSTP, SIG_IGN);
+  sigset_t mask, new_mask;
+
+  //Ignore all unwanted signals!
+  sigfillset(&mask);
+  sigprocmask(SIG_SETMASK, &mask, NULL);
+
+
+  sigemptyset(&new_mask);
+  sigaddset(&new_mask, SIGUSR2);
+  sigaddset(&new_mask, SIGTERM);
+
+  sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
 
   signal(SIGUSR2,endBreakDown);
   signal(SIGTERM,raceStartBreakdown);
+
   #ifdef DEBUG
-  printf("Breakdown Manager created with id: %ld\n",(long)getpid());
+      printf("Breakdown Manager created(%ld)\n",(long)getpid());
   #endif
 
   inf_fich = inf_fichP;
@@ -98,7 +118,7 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
 }
 
   #ifdef DEBUG
-  printf("Breakdown Manager is out!\n");
+    printf("Breakdown Manager is out!\n");
   #endif
   exit(0);
 }
