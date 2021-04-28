@@ -35,8 +35,8 @@ struct message{
 };
 
 struct  messageQ{
-  int team_index;
-  int car_index;
+  long mtype;
+  int response;
 };
 
 // has_breakdown : 0 == no breakdown , 1 == breakdown

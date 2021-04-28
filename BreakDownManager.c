@@ -52,11 +52,11 @@ void createBreakdowns(struct ids *idsP){
 
         printf("A breakdown was created\n");
         struct messageQ msg;
-        msg.team_index=i;
-        msg.car_index=j;
-        printf("[A] Sended (%d %d)\n", msg.team_index,msg.car_index);
-        msgsnd(idsP->msg_queue_id, &msg, sizeof(msg), 0);
 
+        msg.mtype=i*inf_fich->number_of_cars+j+1;
+        msg.response = 1;
+        printf("[A] Sended (%d)\n", msg.response);
+        msgsnd(idsP->msg_queue_id, &msg, sizeof(msg)-sizeof(long), 0);
       }
       else{
         printf("BREAKDOWN FAILED (%d vs %d)\n",r,team_list[i].cars[j].reliability);

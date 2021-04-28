@@ -10,6 +10,8 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <sys/msg.h>
+
 
 
 #include "RaceSimulator.h"
@@ -47,10 +49,11 @@ int interrupting = 0;
 int all_exited = 1;
 int amount_terminated = 0;
 
-
+struct ids *idsT;
 
 //Ends the team
 void teamEnd(int signum){
+
   terminating = 1;
 
   int number_cars = team_list[team_index].number_of_cars;
@@ -94,6 +97,9 @@ void racing(int arrayNumber){
   float current_fuel = inf_fich->fuel_capacity;
   float distance_in_lap = 0;
   struct message data;
+  struct messageQ msg;
+
+  msg.response = 0;
 
   //escrever para o gestor de equipas que o carro começou em corrida com o estado "CORRIDA"
   data.car_index = arrayNumber;
@@ -102,7 +108,22 @@ void racing(int arrayNumber){
 
   while(1){
 
+    msgrcv(idsT->msg_queue_id, &msg, sizeof(msg)-sizeof(long), team_index*inf_fich->number_of_cars+arrayNumber+1, 0);
+    printf("[B] Received (%d)\n", msg.response);
 
+    if(msg.response == 1){
+      printf("THERE WAS A BOOM! (%s)\n", team_list[team_index].team_name);
+      team_list[team_index].cars[arrayNumber].has_breakdown = 1;
+      strcpy(team_list[team_index].cars[arrayNumber].current_state, "SEGURANCA");
+
+      if(strcmp(team_list[team_index].box_state, "LIVRE") == 0){
+        is_reserved = 1;
+        printf("Fiz uma reserva :) \n");
+        sem_post(reservation);
+      }
+
+      msg.response = 0;
+    }
 
     //Racing normally
     if (strcmp(team_list[team_index].cars[arrayNumber].current_state,"CORRIDA") == 0) {
@@ -157,11 +178,10 @@ void racing(int arrayNumber){
 
     }
 
-    printf("Current distance in lap, team name (%.2f, %s)\n",distance_in_lap, team_list[team_index].team_name);
 
     //Passes a lap. Sees if the car has a breakdown or need a refill, if it does then it goes, else it continues the race
     if(distance_in_lap >= inf_fich->lap_distance || terminating == 1 || interrupting == 1){
-      printf("ENTROU AGORA MORRE GORDO\n");
+      printf("ENTROU AGORA MORRE GORDO %s\n", team_list[team_index].team_name);
       //race forced to terminate!
       if(terminating == 1){
         amount_terminated++;
@@ -209,8 +229,10 @@ void racing(int arrayNumber){
 
         sem_wait(update_waiting);
         //Put distance in lap to 0
+        printf("looking to enter %s\n",team_list[team_index].team_name);
         if((strcmp(team_list[team_index].cars[arrayNumber].current_state, "SEGURANCA") == 0) && (strcmp(team_list[team_index].box_state, "RESERVADO") == 0)){
 
+          amount_terminated++;
           car_index = arrayNumber;
 
           //Notify team manager that a car has entered the box
@@ -221,18 +243,18 @@ void racing(int arrayNumber){
           write(channel[1], &data, sizeof(data));
           //Waits for the everything to get sorted in the car
           pthread_cond_wait(&variavel_cond, &mutex_cond);
-
+          amount_terminated--;
+          printf("yeeet\n");
           current_fuel = team_list[team_index].cars[car_index].consumption;
 
           //if the race has terminated while he was in the box
           if(terminating == 1){
-            amount_terminated++;
             printf("I am going away ;(\n");
             break;
           }
 
           else if(interrupting == 1){
-            amount_terminated++;
+
 
             printf("I am being interrupted\n");
             printf("I am going to sleep until the race restarts\n");
@@ -260,12 +282,14 @@ void racing(int arrayNumber){
           //car reserves and immediatly goes into box
           //TO-DO add semaphore
           is_reserved = 0;
+          amount_terminated++;
 
           sem_post(reservation);
 
           car_index = arrayNumber;
 
           sem_post(car_in_box);
+          amount_terminated--;
           distance_in_lap = 0;
 
 
@@ -324,11 +348,12 @@ void interruptRaceTeam(){
 
 
 //Team manager. Will create the car threads
-void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, int channelP[2],int team_indexP){
+void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, int channelP[2],int team_indexP, struct ids *idsP){
   signal(SIGUSR2, teamEnd);
   signal(SIGUSR1, interruptRaceTeam);
   signal(SIGTSTP, teste);
   signal(SIGTERM, raceStart);
+  signal(SIGINT, IGN);
 
   sem_unlink("BOX_MUTEX");
   car_in_box = sem_open("BOX_MUTEX", O_CREAT|O_EXCL,0700,0);
@@ -348,6 +373,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   team_list = team_listP;
   semaphore_list = semaphore_listP;
   team_index = team_indexP;
+  idsT = idsP;
 
   //waits for race to start
   while(start_teams == 0){
@@ -393,14 +419,16 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
     //let cars go past the point of update
     sem_post(update_waiting);
 
-    printf("entrei na box para fazer reparacoes e/ou recarregar a gasolina\n");
+    printf("ESTOU NA BOX CARALHO %s\n",team_list[team_index].team_name);
     if(team_list[team_index].cars[car_index].has_breakdown == 1){
       //Sleep for a random amount of time
       sleep((rand() % (inf_fich->T_Box_Min - inf_fich->T_Box_Max + 1)) + inf_fich->T_Box_Min);
+      team_list[team_index].cars[car_index].has_breakdown = 0;
     }
 
     //refill
     sleep(2);
+    printf("VOU SAIR DA BOX CARALHO\n");
     pthread_cond_signal(&variavel_cond);
 
   }

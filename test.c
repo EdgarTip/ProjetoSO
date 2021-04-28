@@ -74,6 +74,10 @@ void *thread(void *yeet){
   pthread_exit(NULL);
 }
 
+void interrupt(int singum){
+  printf("wow\n");
+}
+
 int main(){
 /*  signal(SIGINT, teamEnd);
 
@@ -125,21 +129,13 @@ int main(){
   }
   */
 
-  int workerId[5];
+  signal(SIGINT, interrupt);
 
-  pthread_t cars[5];
-  printf("wer\n");
-    //Create the car threads
-  for(int i=0; i<5;i++){
-    workerId[i] = i+1;
-    pthread_create(&cars[i], NULL, thread,&workerId[i]);
-  }
 
-  sleep(1);
+  sleep(10);
 
-  for(int j=0; j<5; j++){
+  for(int j=0; j<1; j++){
     printf("yup\n");
-    pthread_join(cars[j],NULL);
   }
 
 

@@ -240,7 +240,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                   if((pids[i] =fork())==0){
 
 
-                    Team_Manager(inf_fich, team_list, semaphore_list,channel,index_team);
+                    Team_Manager(inf_fich, team_list, semaphore_list,channel,index_team,idsP);
                     #ifdef DEBUG
                     printf("Team Manager %ld is out!\n", (long)getpid());
                     #endif
