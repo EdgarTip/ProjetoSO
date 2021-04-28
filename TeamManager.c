@@ -243,7 +243,7 @@ void racing(int arrayNumber){
           write(channel[1], &data, sizeof(data));
           //Waits for the everything to get sorted in the car
           pthread_cond_wait(&variavel_cond, &mutex_cond);
-          amount_terminated--;
+
           printf("yeeet\n");
           current_fuel = team_list[team_index].cars[car_index].consumption;
 

@@ -133,19 +133,12 @@ void sigtstp(int signum){
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(int argc, char* argv[]){
 
-  //ignores all of the signals except sigint and sigtstp
-  sigset_t mask, new_mask;
-  sigfillset(&mask);
-  sigprocmask(SIG_SETMASK, &mask, NULL);
-
-  //add a new mask
-  sigemptyset(&new_mask);
-
-  sigaddset(&new_mask,SIGUSR1);
-  sigaddset(&new_mask,SIGUSR2);
-  
   signal(SIGINT, sigint);
   signal(SIGTSTP, sigtstp);
+  signal(SIGUSR1, SIG_IGN);
+  signal(SIGUSR2, SIG_IGN);
+
+
 
 
   semaphore_list = (struct semaphoreStruct*) malloc(sizeof(struct semaphoreStruct));
