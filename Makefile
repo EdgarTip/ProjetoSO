@@ -1,5 +1,5 @@
-exec: RaceSimulator.o RaceManager.o ReadConfig.o  TeamManager.o BreakDownManager.o MultipleProcessActions.o
-	gcc RaceSimulator.o RaceManager.o ReadConfig.o  TeamManager.o BreakDownManager.o MultipleProcessActions.o -lpthread -D_REENTRANT -Wall -o exec
+exec: RaceSimulator.o RaceManager.o ReadConfig.o TeamManager.o BreakDownManager.o MultipleProcessActions.o
+	gcc RaceSimulator.o RaceManager.o ReadConfig.o TeamManager.o BreakDownManager.o MultipleProcessActions.o -lpthread -D_REENTRANT -Wall -o exec
 
 RaceSimulator.o: RaceSimulator.c
 	gcc -c RaceSimulator.c

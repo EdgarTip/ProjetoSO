@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <pthread.h>
 
+
 #include "RaceSimulator.h"
 #include "MultipleProcessActions.h"
 #include "TeamManager.h"
@@ -239,7 +240,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                   if((pids[i] =fork())==0){
 
 
-                    Team_Manager(inf_fich, team_list, semaphore_list,channel,index_team);
+                    Team_Manager(inf_fich, team_list, semaphore_list,channel,index_team,idsP);
                     #ifdef DEBUG
                     printf("Team Manager %ld is out!\n", (long)getpid());
                     #endif
@@ -264,7 +265,11 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
               read(pipes[channel],&data,sizeof(struct message));
               printf("[RaceManager (%d)] Received %d, %d ,%s.\n",channel,data.car_index, data.team_index,data.message);
-              updateState( team_list, semaphore_list, data );
+
+              updateState(team_list, semaphore_list, data);
+              if(strcmp(data.message,"TERMINADO") == 0){
+                //SIGNAL to end
+              }
             }
           }
         //}
