@@ -220,6 +220,7 @@ void racing(int arrayNumber){
 
       //race forced to terminate!
       if(terminating == 1){
+
         strcpy(team_list[team_index].cars[arrayNumber].current_state,"TERMINADO");
         break;
       }
@@ -263,7 +264,8 @@ void racing(int arrayNumber){
 
 
           strcpy(team_list[team_index].cars[arrayNumber].current_state, "TERMINADO");
-
+          strcpy(data.message, "TERMINADO");
+          write(channel[1], &data, sizeof(struct message));
           #ifdef DEBUG
             printf("============ (%d) Finished the race ============\n", team_list[team_index].cars[arrayNumber].car_number);
           #endif
@@ -318,6 +320,7 @@ void racing(int arrayNumber){
 
             if(terminating == 1){
               strcpy(team_list[team_index].cars[arrayNumber].current_state,"TERMINADO");
+
               break;
             }
             sem_wait(counter_mutex);
@@ -551,7 +554,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   }
 
 
-
+  /*
   //Waits for all the cars to die
   for(int j=0; j<number_of_cars; j++){
     pthread_join(cars[j],NULL);
@@ -570,6 +573,6 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
   #ifdef DEBUG
     printf("Team %ld out\n",(long)getpid());
-  #endif
+  #endif*/
   return;
 }

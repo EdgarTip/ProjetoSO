@@ -37,8 +37,6 @@ void raceStartBreakdown(int signum){
 
 void createBreakdowns(struct ids *idsP){
 
-
-
   sem_wait(semaphore_list->writingMutex);
 
 

@@ -24,6 +24,8 @@ struct config_fich_struct *inf_fich;
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 
+struct ids *ids_proc;
+
 int *pids;
 int *pipes;
 
@@ -56,6 +58,12 @@ void endRaceManager(int signum){
   exit(0);
 }
 
+
+void endRace(){
+  kill(ids_proc->pid_breakdown, SIGUSR2);
+  endRaceManager(0);
+}
+
 void interruptRace(int signum){
   printf("TO DO\n");
 }
@@ -85,6 +93,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
   sigset_t mask, new_mask;
 
+  ids_proc = idsP;
   //Ignore all unwanted signals!
   sigfillset(&mask);
   sigprocmask(SIG_SETMASK, &mask, NULL);
@@ -265,9 +274,9 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
               printf("[RaceManager] (%d) Received %d, %d ,%s.\n",channel,data.car_index, data.team_index,data.message);
               #endif
 
-              updateState(team_list, semaphore_list, data);
+              printf("MENSAGEM RECEBIDA %s\n",data.message);
               if(strcmp(data.message,"TERMINADO") == 0){
-                //SIGNAL to end
+                endRace();
               }
             }
           }
