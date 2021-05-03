@@ -24,14 +24,19 @@ struct config_fich_struct *inf_fich;
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 
+struct ids *ids_proc;
+
 int *pids;
 int *pipes;
 
 void my_handler(int signum)
 {
+
     if (signum == SIGUSR1)
     {
+      #ifdef DEBUG
         printf("Received SIGUSR1! => Interromper corrida\n");
+      #endif
     }
 }
 
@@ -45,8 +50,18 @@ void endRaceManager(int signum){
   }
   free(pids);
   while ((wpid = wait(&status)) > 0);
-  printf("racemanager died\n");
+
+  #ifdef DEBUG
+    printf("RaceManeger is out.\n");
+  #endif
+
   exit(0);
+}
+
+
+void endRace(){
+  kill(ids_proc->pid_breakdown, SIGUSR2);
+  endRaceManager(0);
 }
 
 void interruptRace(int signum){
@@ -75,16 +90,28 @@ int getPipesCreated(int n, int pipes[n]){
 
 void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP, struct ids *idsP){
 
-  signal(SIGINT, SIG_IGN);
-  signal(SIGTSTP, SIG_IGN);
+
+  sigset_t mask, new_mask;
+
+  ids_proc = idsP;
+  //Ignore all unwanted signals!
+  sigfillset(&mask);
+  sigprocmask(SIG_SETMASK, &mask, NULL);
+
+
+  sigemptyset(&new_mask);
+  sigaddset(&new_mask,SIGUSR1);
+  sigaddset(&new_mask,SIGUSR2);
+
+  sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
+
   signal(SIGUSR1, interruptRace);
   signal(SIGUSR2, endRaceManager);
-  //unlink(PIPE_NAME);
 
 
-  #ifdef DEBUG
-  printf("Race_Manager created with id: %ld\n",(long)getpid());
-  #endif
+   #ifdef DEBUG
+    printf("Race_Manager created (%ld)\n",(long)getpid());
+   #endif
 
   inf_fich = inf_fichP;
   team_list = team_listP;
@@ -99,34 +126,6 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   pids = malloc(sizeof(int) * inf_fich->number_of_teams);
   //For testing purposes!
 
-  struct car car1 = {1,10,10,10,10,10,10,0,""};
-  struct car car2 = {2,20,20,20,20,20,20,0,""};
-  struct car car3 = {3,30,30,30,30,30,30,0,""};
-  struct car car4 = {4,40,40,40,40,40,40,0,""};
-  struct car car5 = {5,50,50,50,50,50,50,0,""};
-  struct car car6 = {6,60,60,60,60,60,60,0,""};
-  struct car car7 = {7,70,70,70,70,70,70,0,""};
-  struct car car8 = {8,80,80,80,80,80,80,0,""};
-  struct car car9 = {9,90,90,90,90,90,90,0,""};
-//  struct car car10 = {7,70,70,70,70,70,70,"SAFETY MODE"};
-//  struct car car11 = {8,80,80,80,80,80,80,"RACING"};
-//  struct car car12 = {9,90,90,90,90,90,90,"ENDED"};
-
-
-  /*writingNewCarInSharedMem(team_list, &car1, inf_fich, "Sporting", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car2, inf_fich, "Sporting", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car3, inf_fich, "Sporting", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car4, inf_fich, "Porto", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car5, inf_fich, "Porto", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car6, inf_fich, "Porto", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car7, inf_fich, "Benfica", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car8, inf_fich, "Benfica", semaphore_list);
-  writingNewCarInSharedMem(team_list, &car9, inf_fich, "Benfica", semaphore_list);*/
-//  writingNewCarInSharedMem(team_list, &car10, inf_fich, "Sporting", semaphore_list);
-//  writingNewCarInSharedMem(team_list, &car11, inf_fich, "Boavista", semaphore_list);
-//  writingNewCarInSharedMem(team_list, &car12, inf_fich, "Boavista", semaphore_list);
-
-
   pid_t childpid, wpid;
 
 
@@ -135,19 +134,23 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   int i = 0;
   int index_team = 0;
 
-  printf("\nOpening named pipe for reading\n");
+  #ifdef DEBUG
+    printf("Opening named pipe for reading\n");
+  #endif
   int fd;
   if ((fd= open(PIPE_NAME, O_RDONLY)) < 0) {
     perror("Cannot open pipe for reading: ");
     exit(0);
   }
   pipes[0]=fd;
-  //printf("Named: %d , %d\n",fd,pipes[0]);
-  printf("Named pipe open for reading\n\n");
+  #ifdef DEBUG
+    printf("Named pipe open for reading\n");
+  #endif
 
 
   char teamName[50];
   char received[512];
+  char wrong_command_string[530];
   int n=1;
 
   while(1){
@@ -160,7 +163,9 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
         if(FD_ISSET(pipes[0], &read_set)){
 
           read(pipes[0],received,sizeof(received));
-          printf("[RaceManager (0)] Received %s.\n",received);
+          #ifdef DEBUG
+            printf("[RaceManager] (NP) Received: %s\n",received);
+          #endif
 
           //char received[512] ="ADDCAR TEAM: A, CAR: 20, SPEED: 30, CONSUMPTION: 0.04, RELIABILITY: 95";
           //char received[512] ="ADDCAR TEAM: C, CAR: 21, SPEED: 30, CONSUMPTION: 0.04, RELIABILITY: 95";
@@ -190,7 +195,10 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                 }
               }
               else if(start == 1){
-                printf("Rejected, race already started!\n");
+                strcpy(wrong_command_string,received);
+                strcat(wrong_command_string," => Rejected, race already started!");
+                printf("%s\n",wrong_command_string);
+                writeLog(wrong_command_string,semaphore_list->logMutex,inf_fich->fp);
               }
           } //is START RACE!
           else{ // Check if it is ADDCAR
@@ -204,7 +212,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
               newCar->consumption < 0 ||
               newCar->consumption > inf_fich->fuel_capacity ||
               newCar->reliability < 0 ){
-              char wrong_command_string[530] = "";
+
               strcat(wrong_command_string,"WRONG COMMAND => ");
               strcat(wrong_command_string,received);
               printf("%s\n",wrong_command_string);
@@ -223,15 +231,17 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                 newCar->times_refill = 0;
                 newCar->has_breakdown = 0;
                 strcpy(newCar->current_state, "CORRIDA");
+
                 int teamCreated = writingNewCarInSharedMem(team_list, newCar, inf_fich, teamName, semaphore_list);
 
                 if(teamCreated ==1){
-                  printf("Entrei aqui para criar uma nova equipa :)\n");
+
+                  #ifdef DEBUG
+                    printf("Getting channel for new team.\n");
+                  #endif
+
                   int c=getFreeChannel(inf_fich->number_of_teams+1,pipes);
-                  if(c==-1){
-                    printf("Não há channel para equipa\n"); //PARA TESTES, ISTO NUNCA VAI ACONTECER NA VERSAO FINAL PQ NAO HÁ EQUIPAS PRE CRIADAS
-                    exit(0);
-                  }
+
                   int channel[2];
                   pipe(channel);
                   n++;
@@ -241,11 +251,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
 
                     Team_Manager(inf_fich, team_list, semaphore_list,channel,index_team,idsP);
-                    #ifdef DEBUG
-                    printf("Team Manager %ld is out!\n", (long)getpid());
-                    #endif
 
-                    exit(0);
                   }
 		              i++;
 		              index_team++;
@@ -264,11 +270,13 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
               struct message data;
 
               read(pipes[channel],&data,sizeof(struct message));
-              printf("[RaceManager (%d)] Received %d, %d ,%s.\n",channel,data.car_index, data.team_index,data.message);
+              #ifdef DEBUG
+              printf("[RaceManager] (%d) Received %d, %d ,%s.\n",channel,data.car_index, data.team_index,data.message);
+              #endif
 
-              updateState(team_list, semaphore_list, data);
+              printf("MENSAGEM RECEBIDA %s\n",data.message);
               if(strcmp(data.message,"TERMINADO") == 0){
-                //SIGNAL to end
+                endRace();
               }
             }
           }
@@ -286,7 +294,7 @@ for(int i=0;i<inf_fich->number_of_teams+1;i++){
 }
  free(pipes);
  #ifdef DEBUG
- printf("Race Manager %ld is out!\n", (long)getpid());
+  printf("Race Manager is out!\n");
  #endif
  exit(0);
 

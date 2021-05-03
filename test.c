@@ -18,6 +18,7 @@
 
 int i = 0;
 
+sem_t *sem;
 pthread_mutex_t mutex_cond = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t 	variavel_cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex_interruption = PTHREAD_MUTEX_INITIALIZER;
@@ -78,6 +79,25 @@ void interrupt(int singum){
   printf("wow\n");
 }
 
+void func(){
+  signal(SIGINT,SIG_IGN);
+  printf("vou dormir zzz\n");
+  sleep(5);
+  sem_post(sem);
+  printf("bazei");
+}
+
+void sigint(int signum){
+
+  i = 0;
+  while (i < 5){
+    printf("yoooooooo\n");
+    sleep(1);
+    i++;
+  }
+
+}
+
 int main(){
 /*  signal(SIGINT, teamEnd);
 
@@ -128,15 +148,29 @@ int main(){
 
   }
   */
+  sigset_t mask, new_mask;
+  //Ignore all unwanted signals!
+  sigfillset(&mask);
+  sigprocmask(SIG_SETMASK, &mask, NULL);
 
-  signal(SIGINT, interrupt);
+  //Create the wanted signals
+  sigemptyset(&new_mask);
+  sigaddset(&new_mask,SIGINT);
+
+  sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
+  signal(SIGINT, sigint);
+
+  sigprocmask(SIG_BLOCK,&new_mask, NULL);
+  printf("tou dormindo blockeado\n");
+  sleep(5);
+
+  sigprocmask(SIG_UNBLOCK, &new_mask, NULL);
+
+  printf("tou dormindo nao blockeado\n");
+  sleep(5);
 
 
-  sleep(10);
-
-  for(int j=0; j<1; j++){
-    printf("yup\n");
-  }
+  printf("3etipoji jio \n");
 
 
 
