@@ -113,7 +113,8 @@ void clean(){
 
 void sigint(int signum){
 
-  printf("SIGNAL SIGINT RECEIVED\n");
+  //printf("SIGNAL SIGINT RECEIVED\n");
+  printf("\n");
   writeLog("SIGNAL SIGINT RECEIVED", semaphore_list->logMutex, inf_fich->fp);
   signal(SIGINT, SIG_IGN);
 
@@ -196,7 +197,7 @@ int main(int argc, char* argv[]){
   for(int i = 0; i <= inf_fich->number_of_teams ; i++){
       team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams +1   + i * (inf_fich->number_of_cars));
   }
-  printf("SIMULATOR STARTING\n");
+  //printf("SIMULATOR STARTING\n");
   writeLog("SIMULATOR STARTING", semaphore_list->logMutex, inf_fich->fp);
 
   idsP = (struct ids*) malloc(sizeof(struct ids));
@@ -290,7 +291,7 @@ int main(int argc, char* argv[]){
   leituraParaTeste();
   #endif
 
-  printf("SIMULATOR CLOSING\n");
+  //printf("SIMULATOR CLOSING\n");
   writeLog("SIMULATOR CLOSING", semaphore_list->logMutex,  inf_fich->fp);
   clean();
 

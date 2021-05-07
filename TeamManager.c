@@ -165,7 +165,7 @@ void racing(int arrayNumber){
       strcpy(team_list[team_index].cars[arrayNumber].current_state, "SEGURANCA");
       sprintf(log,"CAR %02d IS NOW IN STATE: SEGURANCA",team_list[team_index].cars[arrayNumber].car_number);
       writeLog(log, semaphore_list->logMutex, inf_fich->fp);
-      printf("%s\n",log);
+      //printf("%s\n",log);
       sem_wait(update_waiting);
       if(strcmp(team_list[team_index].box_state, "LIVRE") == 0){
         is_reserved = 1;
@@ -201,7 +201,7 @@ void racing(int arrayNumber){
       strcpy(team_list[team_index].cars[arrayNumber].current_state,"DESISTENCIA");
       sprintf(log,"CAR %02d IS NOW IN STATE: DESISTENCIA",team_list[team_index].cars[arrayNumber].car_number);
       writeLog(log, semaphore_list->logMutex, inf_fich->fp);
-      printf("%s\n",log);
+      //printf("%s\n",log);
       break;
 
     }
@@ -216,7 +216,7 @@ void racing(int arrayNumber){
         strcpy(team_list[team_index].cars[arrayNumber].current_state, "SEGURANCA");
         sprintf(log,"CAR %02d IS NOW IN STATE: SEGURANCA",team_list[team_index].cars[arrayNumber].car_number);
         writeLog(log, semaphore_list->logMutex, inf_fich->fp);
-        printf("%s\n",log);
+        //printf("%s\n",log);
       }
 
       sem_wait(update_waiting);
@@ -300,7 +300,7 @@ void racing(int arrayNumber){
           strcpy(team_list[team_index].cars[arrayNumber].current_state, "TERMINADO");
           sprintf(log,"CAR %02d IS NOW IN STATE: TERMINADO",team_list[team_index].cars[arrayNumber].car_number);
           writeLog(log, semaphore_list->logMutex, inf_fich->fp);
-          printf("%s\n",log);
+          //printf("%s\n",log);
           strcpy(data.message, "TERMINADO");
           write(channel[1], &data, sizeof(struct message));
           #ifdef DEBUG
@@ -329,7 +329,7 @@ void racing(int arrayNumber){
           strcpy(team_list[team_index].cars[arrayNumber].current_state, "BOX");
           sprintf(log,"CAR %02d IS NOW IN STATE: BOX",team_list[team_index].cars[arrayNumber].car_number);
           writeLog(log, semaphore_list->logMutex, inf_fich->fp);
-          printf("%s\n",log);
+          //printf("%s\n",log);
           //Waits for the everything to get sorted in the car
           sem_wait(wait_box);
 
@@ -375,7 +375,7 @@ void racing(int arrayNumber){
           strcpy(team_list[team_index].cars[arrayNumber].current_state, "CORRIDA");
           sprintf(log,"CAR %02d IS NOW IN STATE: CORRIDA",team_list[team_index].cars[arrayNumber].car_number);
           writeLog(log, semaphore_list->logMutex, inf_fich->fp);
-          printf("%s\n",log);
+          //printf("%s\n",log);
 
         }
 
