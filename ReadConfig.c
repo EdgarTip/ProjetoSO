@@ -50,7 +50,7 @@ if( validation != 9 ||
     inf_fich->time_units_per_second < 0 ||
     inf_fich->lap_distance < 0 ||
     inf_fich->number_of_laps <  0 ||
-
+    inf_fich->number_of_teams < 3 ||
     inf_fich->number_of_cars < 0 ||
     inf_fich->T_Avaria < 0 ||
     inf_fich->T_Box_Min < 0 ||

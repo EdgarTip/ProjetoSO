@@ -24,8 +24,6 @@ struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 
 pthread_t *cars;
-pthread_mutex_t mutex_cond = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t 	variavel_cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex_interruption = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t 	interruption_cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t  mutex_stop = PTHREAD_MUTEX_INITIALIZER;
@@ -35,6 +33,7 @@ sem_t *car_in_box;
 sem_t *reservation;
 sem_t *update_waiting;
 sem_t *counter_mutex;
+sem_t *wait_box;
 
 
 int team_index;
@@ -49,6 +48,7 @@ int terminating = 0;
 int interrupting = 0;
 int all_exited = 1;
 int amount_terminated = 0;
+int out = 0;
 
 sigset_t mask, new_mask;
 struct ids *idsT;
@@ -56,6 +56,7 @@ struct ids *idsT;
 //Ends the team
 void teamEnd(int signum){
 
+  //This code exists in case a SIGINT is called after a  SIGUSR1
   if(start_teams == 0){
     for(int i =0 ; i < team_list[team_index].number_of_cars; i++){
       pthread_cancel(cars[i]);
@@ -64,6 +65,8 @@ void teamEnd(int signum){
   }
 
   terminating = 1;
+  interrupting = 0;
+  pthread_cond_broadcast(&interruption_cond);
 
   int number_cars = team_list[team_index].number_of_cars;
 
@@ -72,6 +75,7 @@ void teamEnd(int signum){
     sleep(1/inf_fich->time_units_per_second);
   }
 
+  out = 1;
 
   pthread_cond_broadcast(&stop_cond);
 
@@ -85,27 +89,44 @@ void teamEnd(int signum){
   sem_close(reservation);
   sem_close(update_waiting);
   sem_close(counter_mutex);
-  pthread_mutex_destroy(&mutex_cond);
-  pthread_cond_destroy(&variavel_cond);
+  sem_close(wait_box);
   pthread_cond_destroy(&interruption_cond);
   pthread_mutex_destroy(&mutex_interruption);
   pthread_mutex_destroy(&mutex_stop);
   pthread_cond_destroy(&stop_cond);
+  sem_unlink("BOX_MUTEX");
+  sem_unlink("RESERVATION_MUTEX");
+  sem_unlink("UPDATE_MUTEX");
+  sem_unlink("END COUNTER");
+  sem_unlink("WAIT BOX");
+
   #ifdef DEBUG
     printf("Team %ld out\n",(long)getpid());
   #endif
+
   exit(0);
 }
 
 
 
 void waitForEnd(){
+
   sem_wait(counter_mutex);
   amount_terminated++;
   printf("Team %s Amount terminated : %d\n",team_list[team_index].team_name, amount_terminated);
   sem_post(counter_mutex);
-  pthread_cond_wait(&stop_cond,&mutex_stop);
+
+
+  pthread_mutex_lock(&mutex_stop);
+
+  printf("enterr\n");
+  while(out == 0){
+    pthread_cond_wait(&stop_cond,&mutex_stop);
+  }
+
   pthread_mutex_unlock(&mutex_stop);
+
+  printf("exittt\n");
   pthread_exit(NULL);
 }
 
@@ -235,18 +256,27 @@ void racing(int arrayNumber){
         #ifdef DEBUG
           printf("(%d) Interrupted.\n", team_list[team_index].cars[arrayNumber].car_number);
         #endif
+        //all of the cars are now on stand by
+        if(amount_terminated == team_list[team_index].number_of_cars){
+           start_teams =  0;
+         }
 
-        pthread_cond_wait(&interruption_cond, &mutex_interruption);
+         pthread_mutex_lock(&mutex_interruption);
+
+         while (interrupting == 1) {
+
+           pthread_cond_wait(&interruption_cond, &mutex_interruption);
+         }
 
         pthread_mutex_unlock(&mutex_interruption);
 
         if(terminating == 1){
-          sem_wait(counter_mutex);
-          amount_terminated--;
-          sem_post(counter_mutex);
+
           strcpy(team_list[team_index].cars[arrayNumber].current_state,"TERMINADO");
           break;
         }
+
+
         sem_wait(counter_mutex);
         amount_terminated--;
         sem_post(counter_mutex);
@@ -294,7 +324,7 @@ void racing(int arrayNumber){
           strcpy(team_list[team_index].cars[arrayNumber].current_state, "BOX");
 
           //Waits for the everything to get sorted in the car
-          pthread_cond_wait(&variavel_cond, &mutex_cond);
+          sem_wait(wait_box);
 
 
           current_fuel = team_list[team_index].cars[car_index].consumption;
@@ -314,7 +344,11 @@ void racing(int arrayNumber){
             printf("(%d) Interrupted.\n", team_list[team_index].cars[arrayNumber].car_number);
             #endif
 
-            pthread_cond_wait(&interruption_cond, &mutex_interruption);
+            pthread_mutex_lock(&mutex_interruption);
+            while (interrupting == 1) {
+
+              pthread_cond_wait(&interruption_cond, &mutex_interruption);
+            }
 
             pthread_mutex_unlock(&mutex_interruption);
 
@@ -351,7 +385,7 @@ void racing(int arrayNumber){
           #ifdef DEBUG
           printf("(%s) Stopped in box.\n", team_list[team_index].team_name);
           #endif
-          pthread_cond_wait(&variavel_cond, &mutex_cond);
+          sem_wait(wait_box);
           printf("Car %d while10 \n",team_list[team_index].cars[arrayNumber].car_number);
           if(terminating == 1){
             strcpy(team_list[team_index].cars[arrayNumber].current_state,"TERMINADO");
@@ -366,9 +400,15 @@ void racing(int arrayNumber){
             printf("(%d) Interrupted.\n", team_list[team_index].cars[arrayNumber].car_number);
             #endif
 
-            pthread_cond_wait(&interruption_cond, &mutex_interruption);
+            pthread_mutex_lock(&mutex_interruption);
 
-            pthread_mutex_unlock(&mutex_interruption);
+            while (interrupting == 1) {
+
+              pthread_cond_wait(&interruption_cond, &mutex_interruption);
+            }
+
+           pthread_mutex_unlock(&mutex_interruption);
+
 
             if(terminating == 1){
               break;
@@ -465,7 +505,8 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   update_waiting = sem_open("UPDATE_MUTEX", O_CREAT|O_EXCL,0700,1);
   sem_unlink("END COUNTER");
   counter_mutex = sem_open("END COUNTER", O_CREAT|O_EXCL,0700,1);
-
+  sem_unlink("WAIT BOX");
+  wait_box = sem_open("WAIT BOX", O_CREAT|O_EXCL,0700,0);
 
   #ifdef DEBUG
     printf("Team Manager created (%ld)\n", (long)getpid());
@@ -549,7 +590,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
     is_reserved = 0;
     strcpy(team_list[team_index].box_state, "LIVRE");
-    pthread_cond_signal(&variavel_cond);
+    sem_post(wait_box);
     sigprocmask(SIG_UNBLOCK,&new_mask, &mask);
   }
 
@@ -563,8 +604,7 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   free(cars);
   sem_close(car_in_box);
   sem_close(reservation);
-  pthread_mutex_destroy(&mutex_cond);
-  pthread_cond_destroy(&variavel_cond);
+
   pthread_cond_destroy(&interruption_cond);
   pthread_mutex_destroy(&mutex_interruption);
   pthread_mutex_destroy(&mutex_stop);
