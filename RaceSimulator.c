@@ -50,6 +50,7 @@ int shmid;
 int named_pipe_fd;
 pid_t pids[2];
 
+int raced;  //Variavel para quando se fizer crtl C, se não foi feita a corrida, não se fazer o readStatistics
 
 //Only for debug purposes will be deleted/changed later
 void leituraParaTeste(){
@@ -101,6 +102,9 @@ void clean(){
   sem_unlink("MUTEX");
   sem_unlink("WRITING_MUTEX");
   sem_unlink("READING_MUTEX");
+
+  msgctl(idsP->msg_queue_id,IPC_RMID,NULL);
+
   free(semaphore_list);
   free(idsP);
   close(named_pipe_fd);
@@ -119,8 +123,9 @@ void sigint(int signum){
   pid_t wpid;
   int status = 0;
   while ((wpid = wait(&status)) > 0);
-  leituraParaTeste();
-  readStatistics(inf_fich, team_list, semaphore_list);
+  //leituraParaTeste();
+  if(raced==1)
+    readStatistics(inf_fich, team_list, semaphore_list);
   clean();
   exit(0);
 }
@@ -129,7 +134,7 @@ void sigtstp(int signum){
 
   signal(SIGTSTP, SIG_IGN);
   readStatistics(inf_fich, team_list, semaphore_list);
-  signal(SIGTSTP, sigtstp);
+  //signal(SIGTSTP, sigtstp);
 
 }
 
@@ -152,7 +157,7 @@ int main(int argc, char* argv[]){
   signal(SIGTSTP, sigtstp);
 
 
-
+  raced=0;
 
 
 

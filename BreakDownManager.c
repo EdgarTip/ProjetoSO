@@ -15,9 +15,9 @@
 #include "TeamManager.h"
 
 struct config_fich_struct *inf_fich;
-
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
+
 
 int start_breakdown = 0;
 
@@ -77,7 +77,7 @@ void createBreakdowns(struct ids *idsP){
 }
 
 
-void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, struct ids *idsP){
+int BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, struct ids *idsP){
 
   sigset_t mask, new_mask;
 
@@ -114,9 +114,4 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
     createBreakdowns(idsP);
 
 }
-
-  #ifdef DEBUG
-    printf("Breakdown Manager is out!\n");
-  #endif
-  exit(0);
 }

@@ -24,7 +24,7 @@ struct config_fich_struct *inf_fich;
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
 
-struct ids *ids_proc;
+struct ids *ids_P;
 
 int *pids;
 int *pipes;
@@ -60,7 +60,7 @@ void endRaceManager(int signum){
 
 
 void endRace(){
-  kill(ids_proc->pid_breakdown, SIGUSR2);
+  kill(ids_P->pid_breakdown, SIGUSR2);
   endRaceManager(0);
 }
 
@@ -93,7 +93,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
   sigset_t mask, new_mask;
 
-  ids_proc = idsP;
+  ids_P = idsP;
   //Ignore all unwanted signals!
   sigfillset(&mask);
   sigprocmask(SIG_SETMASK, &mask, NULL);
@@ -285,17 +285,5 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
     } //select
 } //while
-
- //the father process waits for all his children to die :(
- while ((wpid = wait(&status)) > 0);
-
-for(int i=0;i<inf_fich->number_of_teams+1;i++){
-  close(pipes[i]);
-}
- free(pipes);
- #ifdef DEBUG
-  printf("Race Manager is out!\n");
- #endif
- exit(0);
 
 }
