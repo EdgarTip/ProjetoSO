@@ -15,9 +15,9 @@
 #include "TeamManager.h"
 
 struct config_fich_struct *inf_fich;
-
 struct team *team_list;
 struct semaphoreStruct *semaphore_list;
+
 
 int start_breakdown = 0;
 
@@ -37,6 +37,7 @@ void raceStartBreakdown(int signum){
 
 void createBreakdowns(struct ids *idsP){
 
+  char log[200];
   sem_wait(semaphore_list->writingMutex);
 
 
@@ -48,15 +49,9 @@ void createBreakdowns(struct ids *idsP){
 
       if(r >= team_list[i].cars[j].reliability && team_list[i].cars[j].has_breakdown != 1){
 
-        char problem_string[200]="";
-        char car_number[3]="";
-
-        strcpy(problem_string,"NEW PROBLEM IN CAR ");
-        sprintf(car_number,"%2d",team_list[i].cars[j].car_number);
-        strcat(problem_string,car_number);
-
-        printf("NEW PROBLEM IN CAR %2d\n",team_list[i].cars[j].car_number);
-        writeLog(problem_string,semaphore_list->logMutex,inf_fich->fp);
+        sprintf(log, "NEW PROBLEM IN CAR %02d",team_list[i].cars[j].car_number);
+        //printf("%s\n",log);
+        writeLog(log,semaphore_list->logMutex,inf_fich->fp);
         struct messageQ msg;
 
         msg.mtype=i*inf_fich->number_of_cars+j+1;
@@ -77,7 +72,7 @@ void createBreakdowns(struct ids *idsP){
 }
 
 
-void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, struct ids *idsP){
+int BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_listP, struct semaphoreStruct *semaphore_listP, struct ids *idsP){
 
   sigset_t mask, new_mask;
 
@@ -114,9 +109,4 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
     createBreakdowns(idsP);
 
 }
-
-  #ifdef DEBUG
-    printf("Breakdown Manager is out!\n");
-  #endif
-  exit(0);
 }

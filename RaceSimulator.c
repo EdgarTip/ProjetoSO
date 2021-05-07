@@ -50,6 +50,7 @@ int shmid;
 int named_pipe_fd;
 pid_t pids[2];
 
+int raced;  //Variavel para quando se fizer crtl C, se não foi feita a corrida, não se fazer o readStatistics
 
 //Only for debug purposes will be deleted/changed later
 void leituraParaTeste(){
@@ -101,6 +102,9 @@ void clean(){
   sem_unlink("MUTEX");
   sem_unlink("WRITING_MUTEX");
   sem_unlink("READING_MUTEX");
+
+  msgctl(idsP->msg_queue_id,IPC_RMID,NULL);
+
   free(semaphore_list);
   free(idsP);
   close(named_pipe_fd);
@@ -109,7 +113,8 @@ void clean(){
 
 void sigint(int signum){
 
-  printf("SIGNAL SIGINT RECEIVED\n");
+  //printf("SIGNAL SIGINT RECEIVED\n");
+  printf("\n");
   writeLog("SIGNAL SIGINT RECEIVED", semaphore_list->logMutex, inf_fich->fp);
   signal(SIGINT, SIG_IGN);
 
@@ -119,8 +124,9 @@ void sigint(int signum){
   pid_t wpid;
   int status = 0;
   while ((wpid = wait(&status)) > 0);
-  leituraParaTeste();
-  readStatistics(inf_fich, team_list, semaphore_list);
+  //leituraParaTeste();
+  if(raced==1)
+    readStatistics(inf_fich, team_list, semaphore_list);
   clean();
   exit(0);
 }
@@ -129,7 +135,7 @@ void sigtstp(int signum){
 
   signal(SIGTSTP, SIG_IGN);
   readStatistics(inf_fich, team_list, semaphore_list);
-  signal(SIGTSTP, sigtstp);
+  //signal(SIGTSTP, sigtstp);
 
 }
 
@@ -152,7 +158,7 @@ int main(int argc, char* argv[]){
   signal(SIGTSTP, sigtstp);
 
 
-
+  raced=0;
 
 
 
@@ -191,7 +197,7 @@ int main(int argc, char* argv[]){
   for(int i = 0; i <= inf_fich->number_of_teams ; i++){
       team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams +1   + i * (inf_fich->number_of_cars));
   }
-  printf("SIMULATOR STARTING\n");
+  //printf("SIMULATOR STARTING\n");
   writeLog("SIMULATOR STARTING", semaphore_list->logMutex, inf_fich->fp);
 
   idsP = (struct ids*) malloc(sizeof(struct ids));
@@ -285,7 +291,7 @@ int main(int argc, char* argv[]){
   leituraParaTeste();
   #endif
 
-  printf("SIMULATOR CLOSING\n");
+  //printf("SIMULATOR CLOSING\n");
   writeLog("SIMULATOR CLOSING", semaphore_list->logMutex,  inf_fich->fp);
   clean();
 
