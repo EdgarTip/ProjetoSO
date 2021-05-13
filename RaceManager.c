@@ -42,14 +42,16 @@ void my_handler(int signum)
 
 
 void endRaceManager(int signum){
-  pid_t wpid;
-  int status = 0;
+
 
   for(int i = 0; i < inf_fich->number_of_teams; i++){
     kill(pids[i], SIGUSR2);
   }
   free(pids);
-  while ((wpid = wait(&status)) > 0);
+
+  for(int i = 0; i < inf_fich->number_of_teams; i++){
+      wait(NULL);
+  }
 
   #ifdef DEBUG
     printf("RaceManeger is out.\n");
@@ -60,7 +62,9 @@ void endRaceManager(int signum){
 
 
 void endRace(){
+    printf("!!!!!!!!!!!!!!!!!!!!!!beakdown pid : %d\n", ids_proc->pid_breakdown);
   kill(ids_proc->pid_breakdown, SIGUSR2);
+  kill(getppid(), SIGUSR2);
   endRaceManager(0);
 }
 
@@ -92,7 +96,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
 
   sigset_t mask, new_mask;
-
+  printf("Race manager id: %d\n", getpid());
   ids_proc = idsP;
   //Ignore all unwanted signals!
   sigfillset(&mask);
@@ -187,8 +191,9 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                   //Notificar os TeamManagers do inicio da corrida
                     for(int i = 0; i<inf_fich->number_of_teams; i++){
                       kill(pids[i], SIGTERM);
-                    }
 
+                    }
+                    kill(getppid(), SIGTERM);
                     kill(idsP->pid_breakdown, SIGTERM);
 
                     start = 1;
@@ -276,6 +281,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
               printf("MENSAGEM RECEBIDA %s\n",data.message);
               if(strcmp(data.message,"TERMINADO") == 0){
+
                 endRace();
               }
             }

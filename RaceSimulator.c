@@ -49,6 +49,7 @@ struct ids *idsP;
 int shmid;
 int named_pipe_fd;
 pid_t pids[2];
+int race_started =0 ;
 
 
 //Only for debug purposes will be deleted/changed later
@@ -93,11 +94,12 @@ void leituraParaTeste(){
 void clean(){
   free(inf_fich);
   shmdt(team_list);
-
+    msgctl(idsP->msg_queue_id,IPC_RMID,NULL);
   shmctl(shmid, IPC_RMID, NULL);
   sem_close(semaphore_list->logMutex);
   sem_close(semaphore_list->writingMutex);
   sem_close(semaphore_list->readingMutex);
+
   sem_unlink("MUTEX");
   sem_unlink("WRITING_MUTEX");
   sem_unlink("READING_MUTEX");
@@ -106,6 +108,24 @@ void clean(){
   close(named_pipe_fd);
   unlink(PIPE_NAME);
 }
+
+
+void endRaceSim(int signum){
+    pid_t wpid;
+    int status = 0;
+
+    while ((wpid = wait(&status)) > 0);
+
+    leituraParaTeste();
+    if (race_started == 1) {
+        printf("oiioioio\n");
+         readStatistics(inf_fich, team_list, semaphore_list);
+     }
+
+    clean();
+    exit(0);
+}
+
 
 void sigint(int signum){
 
@@ -116,22 +136,23 @@ void sigint(int signum){
   kill(pids[0],SIGUSR2);
   kill(pids[1],SIGUSR2);
 
-  pid_t wpid;
-  int status = 0;
-  while ((wpid = wait(&status)) > 0);
-  leituraParaTeste();
-  readStatistics(inf_fich, team_list, semaphore_list);
-  clean();
-  exit(0);
+  endRaceSim(0);
 }
+
 
 void sigtstp(int signum){
 
   signal(SIGTSTP, SIG_IGN);
-  readStatistics(inf_fich, team_list, semaphore_list);
+  if(race_started == 1) readStatistics(inf_fich, team_list, semaphore_list);
   signal(SIGTSTP, sigtstp);
 
 }
+
+void raceStartRaceSim(int signum){
+    race_started =1;
+}
+
+
 
 //Main function. Here the RaceManager and the MalfunctionManager processes will be created
 int main(int argc, char* argv[]){
@@ -145,14 +166,15 @@ int main(int argc, char* argv[]){
   //Create the wanted signals
   sigemptyset(&new_mask);
   sigaddset(&new_mask,SIGINT);
-	sigaddset(&new_mask,SIGTSTP);
+  sigaddset(&new_mask,SIGTSTP);
+  sigaddset(&new_mask,SIGTERM);
+  sigaddset(&new_mask, SIGUSR2);
 
   sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
   signal(SIGINT, sigint);
   signal(SIGTSTP, sigtstp);
-
-
-
+  signal(SIGUSR2, endRaceSim);
+  signal(SIGTERM, raceStartRaceSim);
 
 
 
@@ -219,9 +241,6 @@ int main(int argc, char* argv[]){
   }
 
 
-
-
-
   unlink(PIPE_NAME);
     #ifdef DEBUG
     printf("Creating named pipe.\n");
@@ -270,24 +289,6 @@ int main(int argc, char* argv[]){
         write(named_pipe_fd, toSend, sizeof(toSend));
       }
     }
-
-  //The main process waits for its child (BreakDownManager) to die
-  pid_t wpid;
-  int status = 0;
-
-  while ((wpid = wait(&status)) > 0);
-
-  #ifdef DEBUG
-  printf("---SHARED MEMORY BEFORE THE SIMULATOR ENDED---\n");
-  //Only for debugging purposes. We know that there are no protections to the shared memory here, but they
-  //do not need to exist because it is in a controled envirnoment. In future work there will be a mutex
-  //stoping any readers in case someone is changing the shared memory.
-  leituraParaTeste();
-  #endif
-
-  printf("SIMULATOR CLOSING\n");
-  writeLog("SIMULATOR CLOSING", semaphore_list->logMutex,  inf_fich->fp);
-  clean();
 
   return 0;
 

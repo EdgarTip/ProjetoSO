@@ -17,11 +17,11 @@ void writeLog(char * string, sem_t *mutex,FILE *fp){
   char buffer[550]="";
 
   time_t rawtime;
-  struct tm * timeinfo;
+  struct tm timeinfo;
 
   time ( &rawtime );
-  timeinfo = localtime ( &rawtime );
-  sprintf(buffer,"%.2d:%.2d:%.2d %s\n",timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec,string);
+  localtime_r ( &rawtime, &timeinfo);
+  sprintf(buffer,"%.2d:%.2d:%.2d %s\n",timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec,string);
 
   sem_wait(mutex);
 
@@ -184,19 +184,17 @@ void updateState(struct team *team_list, struct semaphoreStruct *semaphore_list,
 //Prints the statistics of a race (could be midway or at the end). This has priority over writing actions
 void readStatistics(struct config_fich_struct *inf_fich, struct team *team_list, struct semaphoreStruct *semaphore_list){
 
-
+    printf("entered here\n");
   sem_wait(semaphore_list->writingMutex);
-
+  printf("yo\n");
   //First line for team index second line for car index
   int top5Teams[5][2] = {{-1,-1},{-1,-1},{-1,-1},{-1,-1},{-1,-1}};
   int lastTeam[1][2] = {{-1,-1}};
-
   getTop5Teams(inf_fich, team_list, top5Teams);
   getLastTeam(inf_fich, team_list, lastTeam);
   int total_breakdowns = amountBreakdowns(inf_fich, team_list);
   int total_reffils = amountReffil(inf_fich, team_list);
   int total_racing = amountRacing(inf_fich, team_list);
-
   for(int i = 0; i<5; i++){
     printf("Lugar: %d, Número Carro: %d, Nome Equipa: %s, Número Voltas: %d, Número de Paragens na Box: %d\n", i+1, team_list[top5Teams[i][0]].cars[top5Teams[i][1]].car_number
                                                                                                               , team_list[top5Teams[i][0]].team_name
