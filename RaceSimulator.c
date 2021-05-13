@@ -53,6 +53,7 @@ int race_started =0 ;
 
 
 //Only for debug purposes will be deleted/changed later
+/*
 void leituraParaTeste(){
 
   for(int i = 0; i< inf_fich->number_of_teams; i++){
@@ -64,7 +65,7 @@ void leituraParaTeste(){
         break;
       }
       printf("Amount cars: %d\n Box State %s\n", team_list[i].number_of_cars, team_list[i].box_state );
-      /*printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %.2f\n Car reliability: %d\n Number laps: %d\n Amount Breakdown %d\n Amount reffil:%d\n Car state:%s", team_list[i].team_name
+      printf("Team name:%s\n Box state:%s\n Car number: %d\n Car speed: %d\n Car consumption: %.2f\n Car reliability: %d\n Number laps: %d\n Amount Breakdown %d\n Amount reffil:%d\n Car state:%s", team_list[i].team_name
                                                                                                                        , team_list[i].box_state
                                                                                                                        , team_list[i].cars[j].car_number
                                                                                                                        , team_list[i].cars[j].speed
@@ -73,7 +74,7 @@ void leituraParaTeste(){
                                                                                                                        , team_list[i].cars[j].number_of_laps
                                                                                                                        , team_list[i].cars[j].amount_breakdown
                                                                                                                        , team_list[i].cars[j].times_refill
-                                                                                                                       , team_list[i].cars[j].current_state);*/
+                                                                                                                       , team_list[i].cars[j].current_state);
 
      printf("Team name:       %s\nBox state:       %s\nCar number:      %d\nCar speed:       %d\nCar consumption: %.2f\nCar reliability: %d\nNumber of laps:       %d\n", team_list[i].team_name
                                                                                                                                                                                                                                        , team_list[i].box_state
@@ -88,13 +89,13 @@ void leituraParaTeste(){
     printf("-----------\n");
   }
 
-}
+}*/
 
 //cleans active memory
 void clean(){
   free(inf_fich);
   shmdt(team_list);
-    msgctl(idsP->msg_queue_id,IPC_RMID,NULL);
+  msgctl(idsP->msg_queue_id,IPC_RMID,NULL);
   shmctl(shmid, IPC_RMID, NULL);
   sem_close(semaphore_list->logMutex);
   sem_close(semaphore_list->writingMutex);
@@ -116,9 +117,8 @@ void endRaceSim(int signum){
 
     while ((wpid = wait(&status)) > 0);
 
-    leituraParaTeste();
+    //leituraParaTeste();
     if (race_started == 1) {
-        printf("oiioioio\n");
          readStatistics(inf_fich, team_list, semaphore_list);
      }
 
@@ -129,8 +129,8 @@ void endRaceSim(int signum){
 
 void sigint(int signum){
 
-  printf("SIGNAL SIGINT RECEIVED\n");
-  writeLog("SIGNAL SIGINT RECEIVED", semaphore_list->logMutex, inf_fich->fp);
+  printf("\n");
+  writeLog("SIMULATOR CLOSING", semaphore_list->logMutex, inf_fich->fp);
   signal(SIGINT, SIG_IGN);
 
   kill(pids[0],SIGUSR2);
@@ -213,7 +213,7 @@ int main(int argc, char* argv[]){
   for(int i = 0; i <= inf_fich->number_of_teams ; i++){
       team_list[i].cars = (struct car*)(team_list + inf_fich->number_of_teams +1   + i * (inf_fich->number_of_cars));
   }
-  printf("SIMULATOR STARTING\n");
+
   writeLog("SIMULATOR STARTING", semaphore_list->logMutex, inf_fich->fp);
 
   idsP = (struct ids*) malloc(sizeof(struct ids));

@@ -94,6 +94,7 @@ int getPipesCreated(int n, int pipes[n]){
 
 void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,  struct semaphoreStruct *semaphore_listP, struct ids *idsP){
 
+  char log[550];
 
   sigset_t mask, new_mask;
   printf("Race manager id: %d\n", getpid());
@@ -151,10 +152,8 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
     printf("Named pipe open for reading\n");
   #endif
 
-
   char teamName[50];
   char received[512];
-  char wrong_command_string[530];
   int n=1;
 
   while(1){
@@ -184,8 +183,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                   }
                 }
                 if(n_equipas!=inf_fich->number_of_teams){
-                  printf("CANNOT START, NOT ENOUGH TEAMS\n");
-                  writeLog("CANNOT START, NOT ENOUGH TEAMS",semaphore_list->logMutex,inf_fich->fp);
+                   writeLog("CANNOT START, NOT ENOUGH TEAMS",semaphore_list->logMutex,inf_fich->fp);
                 }
                 else{
                   //Notificar os TeamManagers do inicio da corrida
@@ -200,10 +198,8 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                 }
               }
               else if(start == 1){
-                strcpy(wrong_command_string,received);
-                strcat(wrong_command_string," => Rejected, race already started!");
-                printf("%s\n",wrong_command_string);
-                writeLog(wrong_command_string,semaphore_list->logMutex,inf_fich->fp);
+                  sprintf(log,"%s => Rejected, race already started!",received);
+                  writeLog(log,semaphore_list->logMutex,inf_fich->fp);
               }
           } //is START RACE!
           else{ // Check if it is ADDCAR
@@ -218,16 +214,13 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
               newCar->consumption > inf_fich->fuel_capacity ||
               newCar->reliability < 0 ){
 
-              strcat(wrong_command_string,"WRONG COMMAND => ");
-              strcat(wrong_command_string,received);
-              printf("%s\n",wrong_command_string);
-              writeLog(wrong_command_string,semaphore_list->logMutex,inf_fich->fp);
+              sprintf(log,"WRONG COMMAND => %s",received);
+              writeLog(log,semaphore_list->logMutex,inf_fich->fp);
             }
             else{
               if(start == 1){ //Race already started
-                  printf("%s => ",received);
-                  printf("Rejected, race already started!\n");
-                  writeLog("Rejected, race already started!",semaphore_list->logMutex,inf_fich->fp);
+                  sprintf(log,"%s => Rejected, race already started!",received);
+                  writeLog(log, semaphore_list->logMutex, inf_fich->fp);
               }
               else{ //ADD CAR
 
@@ -292,16 +285,5 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
     } //select
 } //while
 
- //the father process waits for all his children to die :(
- while ((wpid = wait(&status)) > 0);
-
-for(int i=0;i<inf_fich->number_of_teams+1;i++){
-  close(pipes[i]);
-}
- free(pipes);
- #ifdef DEBUG
-  printf("Race Manager is out!\n");
- #endif
- exit(0);
 
 }

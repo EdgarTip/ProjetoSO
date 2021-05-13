@@ -25,6 +25,8 @@ void writeLog(char * string, sem_t *mutex,FILE *fp){
 
   sem_wait(mutex);
 
+  printf("%s",buffer);
+
   fprintf(fp,"%s",buffer);
   fflush(fp);
   sem_post(mutex);
@@ -51,7 +53,7 @@ int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct
           team_list[i].cars[j] = *new_car;
 
           sem_post(semaphore_list->writingMutex);
-          sprintf(carLog,"NEW CAR LOADED => TEAM: %s, CAR: %d, SPEED: %d, CONSUMPTION: %.2f, RELIABILITY: %d",team_name,new_car->car_number, new_car->speed,new_car->consumption,new_car->reliability);
+          sprintf(carLog,"NEW CAR LOADED => TEAM: %s, CAR: %02d, SPEED: %d, CONSUMPTION: %.2f, RELIABILITY: %d",team_name,new_car->car_number, new_car->speed,new_car->consumption,new_car->reliability);
           writeLog(carLog,semaphore_list->logMutex, inf_fich->fp);
           return 0;
         }
@@ -70,7 +72,7 @@ int writingNewCarInSharedMem(struct team *team_list, struct car *new_car, struct
       team_list[i].number_of_cars = 1;
 
       sem_post(semaphore_list->writingMutex);
-      sprintf(carLog,"NEW CAR LOADED => TEAM: %s, CAR: %d, SPEED: %d, CONSUMPTION: %.2f, RELIABILITY: %d",team_name,new_car->car_number, new_car->speed,new_car->consumption,new_car->reliability);
+      sprintf(carLog,"NEW CAR LOADED => TEAM: %s, CAR: %02d, SPEED: %d, CONSUMPTION: %.2f, RELIABILITY: %d",team_name,new_car->car_number, new_car->speed,new_car->consumption,new_car->reliability);
       writeLog(carLog,semaphore_list->logMutex, inf_fich->fp);
       return 1;
     }

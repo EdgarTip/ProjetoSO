@@ -3,7 +3,7 @@
 #define SIZE 50
 #define DEBUG
 #define PIPE_NAME "pipe"
-#define MAX 200
+#define MAX 550
 
 #include <stdlib.h>
 #include <string.h>

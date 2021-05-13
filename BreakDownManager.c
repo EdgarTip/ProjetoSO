@@ -22,7 +22,6 @@ struct semaphoreStruct *semaphore_list;
 int start_breakdown = 0;
 
 void endBreakDown(int signum){
-    printf("ef uoioe fo uie uioiououieuio euiofuiowefue fiowuioefwo u\n");
         msgctl(msgid->msg_queue_id,IPC_RMID,NULL);
     start_breakdown =0 ;
   #ifdef DEBUG
@@ -38,6 +37,8 @@ void raceStartBreakdown(int signum){
 
 void createBreakdowns(struct ids *idsP, sigset_t mask, sigset_t new_mask){
 
+  char log[MAX];
+  
   sigprocmask(SIG_BLOCK,&new_mask, NULL);
   sem_wait(semaphore_list->writingMutex);
 
@@ -53,15 +54,10 @@ void createBreakdowns(struct ids *idsP, sigset_t mask, sigset_t new_mask){
 
       if(r >= team_list[i].cars[j].reliability && team_list[i].cars[j].has_breakdown != 1 && strcmp(team_list[i].cars[j].current_state,"TERMINADO") != 0 && strcmp(team_list[i].cars[j].current_state,"DESISTENCIA") != 0){
 
-        char problem_string[200]="";
-        char car_number[3]="";
+        sprintf(log, "NEW PROBLEM IN CAR %02d",team_list[i].cars[j].car_number);
+        //printf("%s\n",log);
+        writeLog(log,semaphore_list->logMutex,inf_fich->fp);
 
-        strcpy(problem_string,"NEW PROBLEM IN CAR ");
-        sprintf(car_number,"%2d",team_list[i].cars[j].car_number);
-        strcat(problem_string,car_number);
-
-        printf("NEW PROBLEM IN CAR %2d\n",team_list[i].cars[j].car_number);
-        writeLog(problem_string,semaphore_list->logMutex,inf_fich->fp);
         struct messageQ msg;
 
         msg.mtype=i*inf_fich->number_of_cars+j+1;
@@ -112,8 +108,9 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
   pause();
 
 
+  //Gives time to threads to be created
+  sleep(1);
 
-  usleep(500);
   while(start_breakdown == 1) {
     sleep(1/inf_fich->time_units_per_second * inf_fich->T_Avaria);
 
@@ -121,8 +118,4 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
 
 }
 
-  #ifdef DEBUG
-    printf("Breakdown Manager is out!\n");
-  #endif
-  exit(0);
 }
