@@ -75,7 +75,9 @@ void cleanT(){
 
 }
 
-
+/*This function is for when the team manager prepares to die. It waits for all the cars to
+end their lap and, when they all do, the team manager cleans all of the resources it uses
+and exits. This function can be called by SIGINT or when a car in the team ends the race.*/
 void teamEnd(int signum){
 
   //This code exists in case a SIGINT is called after a  SIGUSR1
@@ -87,6 +89,7 @@ void teamEnd(int signum){
   }
 
   terminating = 1;
+
   interrupting = 0;
   pthread_cond_broadcast(&interruption_cond);
 
