@@ -29,17 +29,52 @@ struct ids *ids_proc;
 int *pids;
 int *pipes;
 
-void my_handler(int signum)
-{
+int number_of_teams_stopped;
+int number_added_this_iteration;
+int race_has_paused;
+int start = 0;
 
-    if (signum == SIGUSR1)
-    {
-      #ifdef DEBUG
-        printf("Received SIGUSR1! => Interromper corrida\n");
-      #endif
+void skip(int signum){
+
+    number_of_teams_stopped++;
+
+    //means all the teams have finished
+    if(race_has_paused == 0 && number_of_teams_stopped == inf_fich->number_of_teams){
+        writeLog("EVERY SINGLE CAR GAVE UP", semaphore_list->logMutex, inf_fich->fp);
+        kill(getppid(), SIGINT);
     }
 }
 
+void pauseRace(int signum){
+
+    signal(SIGUSR1, SIG_IGN);
+
+    if(start == 1){
+
+        race_has_paused =1;
+        writeLog("SIMULATOR PAUSING", semaphore_list->logMutex, inf_fich->fp);
+
+        for(int i = 0; i < inf_fich->number_of_teams; i++){
+          kill(pids[i], SIGUSR1);
+        }
+
+        kill(ids_proc->pid_breakdown, SIGUSR1);
+
+        start = 0;
+
+        number_added_this_iteration = 0;
+
+        writeLog("WAITING FOR ALL CARS TO PAUSE", semaphore_list->logMutex, inf_fich->fp);
+        while(number_of_teams_stopped != inf_fich->number_of_teams){
+            pause();
+            number_added_this_iteration++;
+        }
+
+        writeLog("ALL CARS PAUSED", semaphore_list->logMutex, inf_fich->fp);
+        printf("IF YOU WANT TO RESTART RACE TYPE: START RACE!\n");
+    }
+
+}
 
 void endRaceManager(int signum){
 
@@ -62,15 +97,11 @@ void endRaceManager(int signum){
 
 
 void endRace(){
-    printf("!!!!!!!!!!!!!!!!!!!!!!beakdown pid : %d\n", ids_proc->pid_breakdown);
   kill(ids_proc->pid_breakdown, SIGUSR2);
   kill(getppid(), SIGUSR2);
   endRaceManager(0);
 }
 
-void interruptRace(int signum){
-  printf("TO DO\n");
-}
 
 int getFreeChannel(int n, int pipes[n]){
     for(int i=0;i<n;i++){
@@ -107,12 +138,14 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   sigemptyset(&new_mask);
   sigaddset(&new_mask,SIGUSR1);
   sigaddset(&new_mask,SIGUSR2);
-
+  sigaddset(&new_mask,SIGALRM);
   sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
 
-  signal(SIGUSR1, interruptRace);
+  signal(SIGUSR1, pauseRace);
   signal(SIGUSR2, endRaceManager);
+  signal(SIGALRM, skip);
 
+  number_of_teams_stopped = 0;
 
    #ifdef DEBUG
     printf("Race_Manager created (%ld)\n",(long)getpid());
@@ -135,9 +168,9 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
 
   int status = 0;
-  int start = 0;
   int i = 0;
   int index_team = 0;
+  int firstStart = 0;
 
   #ifdef DEBUG
     printf("Opening named pipe for reading\n");
@@ -164,7 +197,7 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
     }
     if (select(pipes[n-1]+1, &read_set, NULL, NULL, NULL) > 0 ) { //NAO FAÇO -1 PQ O "PIPES" TEM NUMBER_OF_TEAMS + 1 (NAMED)
         if(FD_ISSET(pipes[0], &read_set)){
-
+          sigprocmask(SIG_BLOCK,&new_mask, NULL);
           read(pipes[0],received,sizeof(received));
           #ifdef DEBUG
             printf("[RaceManager] (NP) Received: %s\n",received);
@@ -174,27 +207,46 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
           //char received[512] ="ADDCAR TEAM: C, CAR: 21, SPEED: 30, CONSUMPTION: 0.04, RELIABILITY: 95";
           //char received[512] ="START RACE!";
           if(strcmp(received,"START RACE!")==0){
+              printf("here!\n");
               //verificar se o numero de equipas é suficiente => erro no ecra e nos logs
               if(start == 0){
-                int n_equipas=0;
-                for(int i=0; i<inf_fich->number_of_teams; i++){
-                  if(strcmp(team_list[i].team_name,"")!=0){
-                    n_equipas++;
-                  }
-                }
-                if(n_equipas!=inf_fich->number_of_teams){
-                   writeLog("CANNOT START, NOT ENOUGH TEAMS",semaphore_list->logMutex,inf_fich->fp);
-                }
-                else{
-                  //Notificar os TeamManagers do inicio da corrida
-                    for(int i = 0; i<inf_fich->number_of_teams; i++){
-                      kill(pids[i], SIGTERM);
+
+                if(firstStart == 0){
+                    int n_equipas=0;
+                    for(int i=0; i<inf_fich->number_of_teams; i++){
+                        if(strcmp(team_list[i].team_name,"")!=0){
+                            n_equipas++;
+                        }
+                    }
+                    if(n_equipas!=inf_fich->number_of_teams){
+                        writeLog("CANNOT START, NOT ENOUGH TEAMS",semaphore_list->logMutex,inf_fich->fp);
+                    }
+                    else{
+                        //Notificar os TeamManagers do inicio da corrida
+                        for(int i = 0; i<inf_fich->number_of_teams; i++){
+                            kill(pids[i], SIGTERM);
+
+                        }
+                        kill(getppid(), SIGTERM);
+                        kill(idsP->pid_breakdown, SIGTERM);
+                        start = 1;
+                        firstStart = 1;
 
                     }
-                    kill(getppid(), SIGTERM);
+                }
+                else{
+                    //Notificar os TeamManagers do inicio da corrida
+                    for(int i = 0; i<inf_fich->number_of_teams; i++){
+                        kill(pids[i], SIGTERM);
+
+                    }
                     kill(idsP->pid_breakdown, SIGTERM);
 
+                    writeLog("RACE UNPAUSED",semaphore_list->logMutex,inf_fich->fp);
                     start = 1;
+                    race_has_paused =0;
+                    number_of_teams_stopped -= number_added_this_iteration;
+                    signal(SIGUSR1, pauseRace);
                 }
               }
               else if(start == 1){
@@ -259,11 +311,13 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
                 }
               }
           } //ISNt START RACE!
+         sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
 
         }//isset
         //else{
           for(int channel=1;channel<(inf_fich->number_of_teams+1);channel++){
             if(FD_ISSET(pipes[channel], &read_set)){
+              sigprocmask(SIG_BLOCK,&new_mask, NULL);
 
               struct message data;
 
@@ -274,9 +328,12 @@ void Race_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
 
               printf("MENSAGEM RECEBIDA %s\n",data.message);
               if(strcmp(data.message,"TERMINADO") == 0){
-
+                signal(SIGUSR1, SIG_IGN);
+                sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
                 endRace();
+
               }
+              sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
             }
           }
         //}

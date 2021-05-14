@@ -34,6 +34,7 @@ sem_t *reservation;
 sem_t *update_waiting;
 sem_t *counter_mutex;
 sem_t *wait_box;
+sem_t *interrupt_race_mutex;
 
 
 int team_index;
@@ -49,6 +50,7 @@ int interrupting = 0;
 int all_exited = 1;
 int amount_terminated = 0;
 int out = 0;
+int firstStart = 0;
 
 sigset_t mask, new_mask;
 struct ids *idsT;
@@ -57,12 +59,12 @@ struct ids *idsT;
 
 
 void cleanT(){
-
     sem_close(car_in_box);
     sem_close(reservation);
     sem_close(update_waiting);
     sem_close(counter_mutex);
     sem_close(wait_box);
+    sem_close(interrupt_race_mutex);
     pthread_cond_destroy(&interruption_cond);
     pthread_mutex_destroy(&mutex_interruption);
     pthread_mutex_destroy(&mutex_stop);
@@ -72,7 +74,36 @@ void cleanT(){
     sem_unlink("UPDATE_MUTEX");
     sem_unlink("END COUNTER");
     sem_unlink("WAIT BOX");
+    sem_unlink("INTERRUPT MUTEX");
 
+}
+
+
+
+void pauseRaceTeams(int signum){
+
+    interrupting = 1;
+
+
+    sigprocmask(SIG_BLOCK,&new_mask, NULL);
+
+
+    //Makes sure it waits for all of the cars
+    sem_wait(interrupt_race_mutex);
+
+
+    //Sends a signal to the race manager that this team has stopped all cars!
+    kill(getppid(), SIGALRM);
+
+    sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
+
+    printf("waiting for signal\n");
+    //waits for a signal
+    pause();
+
+    interrupting = 0;
+    printf("unpaused\n");
+    pthread_cond_broadcast(&interruption_cond);
 }
 
 /*This function is for when the team manager prepares to die. It waits for all the cars to
@@ -80,6 +111,7 @@ end their lap and, when they all do, the team manager cleans all of the resource
 and exits. This function can be called by SIGINT or when a car in the team ends the race.*/
 void teamEnd(int signum){
 
+  sigprocmask(SIG_BLOCK,&new_mask, NULL);
   //This code exists in case a SIGINT is called after a  SIGUSR1
   if(start_teams == 0){
     for(int i =0 ; i < team_list[team_index].number_of_cars; i++){
@@ -125,8 +157,7 @@ void everyoneGaveUp(){
      for(int i =0 ; i < team_list[team_index].number_of_cars; i++){
          pthread_cancel(cars[i]);
      }
-
-     cleanT();
+     kill(getppid(), SIGALRM);
 
      exit(0);
 
@@ -175,7 +206,7 @@ void anouncingEnd(){
 
 //Cars are racing
 void racing(int arrayNumber){
-  sigprocmask(SIG_BLOCK,&new_mask, &mask);
+  sigprocmask(SIG_BLOCK,&new_mask, NULL);
    char log[MAX];
   //Variables
   char update[MAX];
@@ -301,13 +332,14 @@ void racing(int arrayNumber){
         sem_wait(counter_mutex);
         amount_terminated++;
         sem_post(counter_mutex);
-
+        printf("Stopped %s\n", team_list[team_index].team_name);
         #ifdef DEBUG
           printf("(%d) Interrupted.\n", team_list[team_index].cars[arrayNumber].car_number);
         #endif
         //all of the cars are now on stand by
         if(amount_terminated == team_list[team_index].number_of_cars){
            start_teams =  0;
+           sem_post(interrupt_race_mutex);
          }
 
          pthread_mutex_lock(&mutex_interruption);
@@ -395,12 +427,22 @@ void racing(int arrayNumber){
 
             sem_wait(counter_mutex);
             amount_terminated++;
+
+            printf("Stopped %s\n", team_list[team_index].team_name);
+            if(amount_terminated == team_list[team_index].number_of_cars){
+
+              start_teams =  0;
+              sem_post(interrupt_race_mutex);
+            }
+
             sem_post(counter_mutex);
             #ifdef DEBUG
             printf("(%d) Interrupted.\n", team_list[team_index].cars[arrayNumber].car_number);
             #endif
 
             pthread_mutex_lock(&mutex_interruption);
+
+
             while (interrupting == 1) {
 
               pthread_cond_wait(&interruption_cond, &mutex_interruption);
@@ -454,8 +496,14 @@ void racing(int arrayNumber){
           }
 
           else if( interrupting == 1){
+                  printf("Stopped %s\n", team_list[team_index].team_name);
             sem_wait(counter_mutex);
             amount_terminated++;
+            if(amount_terminated == team_list[team_index].number_of_cars){
+               start_teams =  0;
+               sem_post(interrupt_race_mutex);
+             }
+
             sem_post(counter_mutex);
             #ifdef DEBUG
             printf("(%d) Interrupted.\n", team_list[team_index].cars[arrayNumber].car_number);
@@ -521,14 +569,20 @@ void *carThread(void* team_number){
 
 //Signals the race manager that the race has started
 void raceStart(int signum){
-  start_teams = 1;
+
+  if(firstStart == 0 ){
+    start_teams = 1;
+    firstStart = 1;
+  }
+  else{
+      start_teams = 1;
+      pthread_cond_broadcast(&interruption_cond);
+  }
+
 }
 
 
 
-void interruptRaceTeam(){
-  interrupting = 1;
-}
 
 
 //Team manager. Will create the car threads
@@ -544,9 +598,10 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   sigaddset(&new_mask, SIGTERM);
   sigaddset(&new_mask, SIGALRM);
 
+
   sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
   signal(SIGUSR2, teamEnd);
-  signal(SIGUSR1, interruptRaceTeam);
+  signal(SIGUSR1, pauseRaceTeams);
   signal(SIGTERM, raceStart);
   signal(SIGALRM, everyoneGaveUp);
 
@@ -561,6 +616,8 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
   counter_mutex = sem_open("END COUNTER", O_CREAT|O_EXCL,0700,1);
   sem_unlink("WAIT BOX");
   wait_box = sem_open("WAIT BOX", O_CREAT|O_EXCL,0700,0);
+  sem_unlink("INTERRUPT MUTEX");
+  interrupt_race_mutex = sem_open("INTERRUPT MUTEX", O_CREAT|O_EXCL,0700,0);
 
   #ifdef DEBUG
     printf("Team Manager created (%ld)\n", (long)getpid());
@@ -579,7 +636,6 @@ void Team_Manager(struct config_fich_struct *inf_fichP, struct team *team_listP,
     pause();
   }
 
-  sigdelset(&new_mask, SIGTERM);
   sigprocmask(SIG_BLOCK,&new_mask, NULL);
 
 

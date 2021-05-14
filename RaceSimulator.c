@@ -111,6 +111,7 @@ void clean(){
 }
 
 
+
 void endRaceSim(int signum){
     pid_t wpid;
     int status = 0;
@@ -175,7 +176,6 @@ int main(int argc, char* argv[]){
   signal(SIGTSTP, sigtstp);
   signal(SIGUSR2, endRaceSim);
   signal(SIGTERM, raceStartRaceSim);
-
 
 
   semaphore_list = (struct semaphoreStruct*) malloc(sizeof(struct semaphoreStruct));

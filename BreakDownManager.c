@@ -31,6 +31,10 @@ void endBreakDown(int signum){
 
 }
 
+void waitSig(int signum){
+    pause();
+}
+
 void raceStartBreakdown(int signum){
   start_breakdown = 1;
 }
@@ -38,7 +42,7 @@ void raceStartBreakdown(int signum){
 void createBreakdowns(struct ids *idsP, sigset_t mask, sigset_t new_mask){
 
   char log[MAX];
-  
+
   sigprocmask(SIG_BLOCK,&new_mask, NULL);
   sem_wait(semaphore_list->writingMutex);
 
@@ -90,11 +94,13 @@ void BreakDownManager(struct config_fich_struct *inf_fichP, struct team *team_li
   sigemptyset(&new_mask);
   sigaddset(&new_mask, SIGUSR2);
   sigaddset(&new_mask, SIGTERM);
+  sigaddset(&new_mask, SIGUSR1);
 
   sigprocmask(SIG_UNBLOCK,&new_mask, NULL);
 
   signal(SIGUSR2,endBreakDown);
   signal(SIGTERM,raceStartBreakdown);
+  signal(SIGUSR1, waitSig);
 
   #ifdef DEBUG
       printf("Breakdown Manager created(%ld)\n",(long)getpid());
